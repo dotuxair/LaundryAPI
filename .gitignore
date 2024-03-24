@@ -1,0 +1,7 @@
+Images/
+obj/
+bin/
+Migrations/
+appsettings.json
+appsettings.Development.json
+FYP.API.http
