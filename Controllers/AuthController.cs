@@ -34,17 +34,28 @@ namespace FYP.API.Controllers
                     }
                    
                     var admin = await _dbContext.Admins.SingleOrDefaultAsync(a => a.UserId == user.Id);
+                    var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(a => a.UserId == user.Id);
+
                     var claims = new TokenDto()
                     {
                         Email = user.Email,
                     };
-                    if (admin == null)
+                    if (admin == null && retailer == null )
                     {
                         claims.Role = "User";
                         return Ok(new
                         {
                             Token = _methods.CreateToken(claims),
                             Role = "User",
+                        });
+                    } 
+                   else if( admin== null)
+                    {
+                        claims.Role = "Retailer";
+                        return Ok(new
+                        {
+                            Token = _methods.CreateToken(claims),
+                            Role = "Retailer",
                         });
                     }
                     else
