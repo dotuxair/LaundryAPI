@@ -32,7 +32,7 @@ namespace FYP.API.Controllers
                     {
                         return NotFound(new { Error = "Wrong Email / Password" });
                     }
-                   
+
                     var admin = await _dbContext.Admins.SingleOrDefaultAsync(a => a.UserId == user.Id);
                     var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(a => a.UserId == user.Id);
 
@@ -40,7 +40,7 @@ namespace FYP.API.Controllers
                     {
                         Email = user.Email,
                     };
-                    if (admin == null && retailer == null )
+                    if (admin == null && retailer == null)
                     {
                         claims.Role = "User";
                         return Ok(new
@@ -48,8 +48,8 @@ namespace FYP.API.Controllers
                             Token = _methods.CreateToken(claims),
                             Role = "User",
                         });
-                    } 
-                   else if( admin== null)
+                    }
+                    else if (admin == null)
                     {
                         claims.Role = "Retailer";
                         return Ok(new
@@ -100,7 +100,7 @@ namespace FYP.API.Controllers
                     await _dbContext.SaveChangesAsync();
                     return Ok($"Account Created with Name : " + user.Name);
                 }
-                return BadRequest(new {Error = ModelState});
+                return BadRequest(new { Error = ModelState });
             }
             catch
             {
