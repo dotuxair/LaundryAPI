@@ -27,20 +27,20 @@ namespace FYP.API.Controllers
                 if (ModelState.IsValid)
                 {
                     var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == request.Email && a.Password == request.Password);
-
                     if (user == null)
                     {
                         return NotFound(new { Error = "Wrong Email / Password" });
                     }
 
                     var admin = await _dbContext.Admins.SingleOrDefaultAsync(a => a.UserId == user.Id);
-                    var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(a => a.UserId == user.Id);
+                   var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(a => a.UserId == user.Id);
 
                     var claims = new TokenDto()
                     {
                         Email = user.Email,
                     };
-                    if (admin == null && retailer == null)
+
+                    if (admin == null  && retailer == null )
                     {
                         claims.Role = "User";
                         return Ok(new
@@ -70,9 +70,9 @@ namespace FYP.API.Controllers
                 }
                 return BadRequest(new { Error = "Email and Password Feilds can't be empty." });
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(500, "Internal Server Error");
+                return StatusCode(500, $"Internal Server Error {ex}");
             }
         }
 

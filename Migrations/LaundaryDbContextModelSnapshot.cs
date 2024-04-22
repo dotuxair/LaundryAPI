@@ -335,10 +335,15 @@ namespace FYP.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
 
                     b.HasIndex("UserId");
 
@@ -505,9 +510,17 @@ namespace FYP.API.Migrations
 
             modelBuilder.Entity("FYP.API.Models.Domain.Retailer", b =>
                 {
+                    b.HasOne("FYP.API.Models.Domain.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("FYP.API.Models.Domain.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
+
+                    b.Navigation("Branch");
 
                     b.Navigation("User");
                 });

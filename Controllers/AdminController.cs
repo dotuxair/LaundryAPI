@@ -93,6 +93,7 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
         [HttpPost("retailers")]
         public async Task<IActionResult> AddRetailer([FromBody] RetailerDto request)
         {
@@ -110,18 +111,25 @@ namespace FYP.API.Controllers
                     {
                         return Conflict(new { Error = "Email Already Exist" });
                     }
-                    var retailor = new User()
+                    var retailorUser = new User()
                     {
                         Name = request.Name,
                         Email = request.Email,
                         PhoneNumber = request.PhoneNumber,
                         Password = request.Password,
                     };
-
-                    await _dbContext.Users.AddAsync(retailor);
+                    await _dbContext.Users.AddAsync(retailorUser);
                     await _dbContext.SaveChangesAsync();
-                    return Ok($"Retailor Added With Name : " + retailor.Name);
 
+                    var retailer = new Retailer()
+                    {
+                        UserId = retailorUser.Id,
+                        BranchId = branch.Id,
+                    };
+                    await _dbContext.Retailers.AddAsync(retailer);
+                    await _dbContext.SaveChangesAsync();
+
+                    return Ok(new { Success = "Retailer account created successfully" });
                 }
                 return BadRequest(new { Error = "Model is not validated" });
             }
@@ -448,19 +456,19 @@ namespace FYP.API.Controllers
                 var allPrograms = new List<ProgramDto>();
                 foreach (var program in programs)
                 {
-                        var p = new ProgramDto()
-                        {
-                            Id = program.Id,
-                            Name = program.Name,
-                            Type = program.Type,
-                            Duration = program.Duration,
+                    var p = new ProgramDto()
+                    {
+                        Id = program.Id,
+                        Name = program.Name,
+                        Type = program.Type,
+                        Duration = program.Duration,
 
-                            SpinSpeed =program.Type == "washer" ? program.SpinSpeed : "",
-                            AirSpeed = program.Type == "dryer" ? program.SpinSpeed : "",
-                            WaterTemp = program.Type == "washer" ? program.Temprature : "",
-                            AirTemp = program.Type == "dryer" ? program.Temprature : "",
-                            Price = program.Price
-                        };
+                        SpinSpeed = program.Type == "washer" ? program.SpinSpeed : "",
+                        AirSpeed = program.Type == "dryer" ? program.SpinSpeed : "",
+                        WaterTemp = program.Type == "washer" ? program.Temprature : "",
+                        AirTemp = program.Type == "dryer" ? program.Temprature : "",
+                        Price = program.Price
+                    };
 
                     allPrograms.Add(p);
                 }
@@ -509,26 +517,26 @@ namespace FYP.API.Controllers
             }
         }
 
-/*        [HttpPut("programs/{id}")]
+        [HttpPut("programs/{id}")]
         public async Task<IActionResult> UpdateProgram(int id, ProgramDto request)
         {
             try
             {
                 var program = await _dbContext.Programs.SingleOrDefaultAsync(p => p.Id == id);
+
                 if (program == null)
                 {
                     return NotFound(new { Error = "Program not found" });
                 }
 
                 program.Name = request.Name;
-                program.Temprature = request.Temprature;
+                program.Temprature = request.Type == "washer" ? request.WaterTemp : request.AirTemp;
                 program.Type = request.Type;
                 program.Duration = request.Duration;
                 program.SpinSpeed = request.SpinSpeed;
                 program.Price = request.Price;
 
                 await _dbContext.SaveChangesAsync();
-
                 return NoContent();
             }
             catch
@@ -537,7 +545,6 @@ namespace FYP.API.Controllers
             }
         }
 
-*/
         [HttpPost("programs")]
         public async Task<IActionResult> AddProgram(ProgramDto request)
         {
@@ -567,5 +574,73 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
+        [HttpGet("users")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                var users = await _dbContext.Users
+                    .Where(u => !_dbContext.Admins.Any(a => a.UserId == u.Id) &&
+                                !_dbContext.Retailers.Any(r => r.UserId == u.Id))
+                    .ToListAsync();
+
+                return Ok(users);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpGet("admin-and-retailer-users")]
+        public async Task<IActionResult> GetAdminAndRetailerUsers()
+        {
+            try
+            {
+                var adminAndRetailerUsers = await _dbContext.Users
+                    .Where(u => _dbContext.Admins.Any(a => a.UserId == u.Id) || _dbContext.Retailers.Any(r => r.UserId == u.Id))
+                    .Select(u => new SystemUserDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email,
+                        Role = _dbContext.Admins.Any(a => a.UserId == u.Id) ? "Admin" : "Retailer"
+                    })
+                    .ToListAsync();
+
+                return Ok(adminAndRetailerUsers);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+
+
+        [HttpGet("unassigned-branches")]
+        public async Task<IActionResult> GetUnAssignedBranches()
+        {
+            try
+            {
+                var unassignedBranches = await _dbContext.Branches
+                    .Where(b => !_dbContext.Retailers.Any(r => r.BranchId == b.Id))
+                    .Select(b => new
+                    {
+                        BranchName = b.Name,
+                        BranchId = b.Id
+                    })
+                    .ToListAsync();
+
+                return Ok(unassignedBranches);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+
     }
 }
