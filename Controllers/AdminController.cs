@@ -127,13 +127,13 @@ namespace FYP.API.Controllers
                 var userToDelete = _dbContext.Users.Include(u => u.BranchManager).FirstOrDefault(u => u.Id == id);
                 if (userToDelete == null)
                 {
-                    return NotFound(new { Error = "RetailerDto Not Found" });
+                    return NotFound(new { Error = "Retailer Not Found" });
                 }
 
                 _dbContext.Users.Remove(userToDelete);
                 await _dbContext.SaveChangesAsync();
 
-                return Ok(new { Success = "RetailerDto Deleted Successfully" });
+                return Ok(new { Success = "Retailer Deleted Successfully" });
             }
             catch
             {
