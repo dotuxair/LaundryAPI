@@ -18,12 +18,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.1" />
   </ItemGroup>
 
-<<<<<<< HEAD
-=======
   <ItemGroup>
     <Folder Include="Images\Products\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 
->>>>>>> 62032a1 (hamza-work)
 </Project>
