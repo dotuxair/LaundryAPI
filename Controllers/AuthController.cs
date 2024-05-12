@@ -19,62 +19,62 @@ namespace FYP.API.Controllers
             _methods = methods;
 
         }
-        [HttpPost("signin")]
-        public async Task<IActionResult> SignIn([FromBody] SignInDto request)
-        {
-            try
+            [HttpPost("signin")]
+            public async Task<IActionResult> SignIn([FromBody] SignInDto request)
             {
-                if (ModelState.IsValid)
+                try
                 {
-                    var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == request.Email && a.Password == request.Password);
-                    if (user == null)
+                    if (ModelState.IsValid)
                     {
-                        return NotFound(new { Error = "Wrong Email / Password" });
-                    }
-
-                    var admin = await _dbContext.Admins.SingleOrDefaultAsync(a => a.UserId == user.Id);
-                   var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(a => a.UserId == user.Id);
-
-                    var claims = new TokenDto()
-                    {
-                        Email = user.Email,
-                    };
-
-                    if (admin == null  && retailer == null )
-                    {
-                        claims.Role = "User";
-                        return Ok(new
+                        var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == request.Email && a.Password == request.Password);
+                        if (user == null)
                         {
-                            Token = _methods.CreateToken(claims),
-                            Role = "User",
-                        });
-                    }
-                    else if (admin == null)
-                    {
-                        claims.Role = "Retailer";
-                        return Ok(new
+                            return NotFound(new { Error = "Wrong Email / Password" });
+                        }
+
+                        var admin = await _dbContext.Admins.SingleOrDefaultAsync(a => a.UserId == user.Id);
+                        var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(a => a.UserId == user.Id);
+
+                        var claims = new TokenDto()
                         {
-                            Token = _methods.CreateToken(claims),
-                            Role = "Retailer",
-                        });
-                    }
-                    else
-                    {
-                        claims.Role = "Admin";
-                        return Ok(new
+                            Email = user.Email,
+                        };
+
+                        if (admin == null  && retailer == null )
                         {
-                            Token = _methods.CreateToken(claims),
-                            Role = "Admin",
-                        });
+                            claims.Role = "User";
+                            return Ok(new
+                            {
+                                Token = _methods.CreateToken(claims),
+                                Role = "User",
+                            });
+                        }
+                        else if (admin == null)
+                        {
+                            claims.Role = "Retailer";
+                            return Ok(new
+                            {
+                                Token = _methods.CreateToken(claims),
+                                Role = "Retailer",
+                            });
+                        }
+                        else
+                        {
+                            claims.Role = "Admin";
+                            return Ok(new
+                            {
+                                Token = _methods.CreateToken(claims),
+                                Role = "Admin",
+                            });
+                        }
                     }
+                    return BadRequest(new { Error = "Email and Password Feilds can't be empty." });
                 }
-                return BadRequest(new { Error = "Email and Password Feilds can't be empty." });
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Internal Server Error {ex}");
+                }
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal Server Error {ex}");
-            }
-        }
 
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignUpDto request)

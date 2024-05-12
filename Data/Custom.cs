@@ -33,7 +33,7 @@ namespace FYP.API.Data
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(7),
+                Expires = DateTime.UtcNow.AddYears(1),
                 SigningCredentials = credentials,
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Issuer"]
@@ -43,9 +43,7 @@ namespace FYP.API.Data
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
-
             return tokenHandler.WriteToken(token);
-
         }
 
         public double GetDistance(double longitude, double latitude, double otherLongitude, double otherLatitude)

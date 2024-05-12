@@ -1,4 +1,4 @@
-﻿/*using FYP.API.Data;
+﻿using FYP.API.Data;
 using FYP.API.Models.Domain;
 using FYP.API.Models.Dto;
 using Microsoft.AspNetCore.Authorization;
@@ -10,7 +10,7 @@ namespace FYP.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "RetailerDto")]
+    [Authorize(Policy = "Retailer")]
 
     public class RetailerController : ControllerBase
     {
@@ -20,7 +20,7 @@ namespace FYP.API.Controllers
             _dbContext = context;
         }
 
-        [HttpGet("machines")]
+       /* [HttpGet("machines")]
         public async Task<IActionResult> GetAllMachines()
         {
             try
@@ -32,7 +32,7 @@ namespace FYP.API.Controllers
                     return BadRequest("User email not found.");
                 }
 
-                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email && x.UserType == "RetailerDto");
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email && x.UserType == "Retailer");
 
                 if (user == null)
                 {
@@ -64,6 +64,7 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+        */
 
         [HttpPost("machines")]
         public async Task<IActionResult> AddMachine([FromBody] MachineDto request)
@@ -79,118 +80,126 @@ namespace FYP.API.Controllers
 
                 // Active , Busy , In-Maintenance
 
-                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email && x.Role == "RetailerDto");
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email);
 
                 if (user == null)
                 {
-                    return NotFound("RetailerDto not found.");
+                    return NotFound(new {ErrorMsg = "User does not exist."});
+                }
+                var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(r => r.UserId == user.Id);
+                if(retailer == null)
+                {
+                    return NotFound(new { ErrorMsg = "Retailer does not exist." });
                 }
 
-                var branch = await _dbContext.Branches.SingleOrDefaultAsync(b => b.Id == user.BranchId);
+                var branch = await _dbContext.Branches.SingleOrDefaultAsync(b => b.Id == retailer.BranchId);
 
                 if (branch == null)
                 {
-                    return NotFound("Branch not found for the operator.");
+                    return NotFound(new { ErrorMsg = "Branch not found for the Retailer." });
                 }
 
                 var machine = new LaundryMachine
                 {
-                    Name = request.Name,
-                    Capacity = request.Capacity,
+                    MachineCode = request.MachineCode,
                     Status = request.Status,
-                    UserId = user.Id,
+                    Price = request.Price,
+                    MachineType = request.MachineType,
+                    LoadCapacity = request.LoadCapacity,
+                    RetailerId = retailer.Id,
                     BranchId = branch.Id,
                 };
+
 
                 await _dbContext.Machines.AddAsync(machine);
                 await _dbContext.SaveChangesAsync();
 
-                return Ok($"MachineIds added successfully with Name: {machine.Name}");
+                return Ok(new {SuccessMsg = $"Machine Added in {branch.Name}  Successfully."});
             }
             catch
             {
                 return StatusCode(500, "Internal Server Error");
             }
-        }
-        [HttpDelete("machines/{id}")]
-        public async Task<IActionResult> DeleteMachine(int id)
-        {
-            try
-            {
-                var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
+        } /*
+         [HttpDelete("machines/{id}")]
+         public async Task<IActionResult> DeleteMachine(int id)
+         {
+             try
+             {
+                 var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
 
-                if (machine == null)
-                {
-                    return NotFound(new { Error = "MachineIds not found." });
-                }
+                 if (machine == null)
+                 {
+                     return NotFound(new { Error = "MachineIds not found." });
+                 }
 
-                _dbContext.Remove(machine);
-                await _dbContext.SaveChangesAsync();
+                 _dbContext.Remove(machine);
+                 await _dbContext.SaveChangesAsync();
 
-                return Ok($"MachineIds deleted successfully with Id: {machine.Id}");
-            }
-            catch
-            {
-                return StatusCode(500, "Internal Server Error");
-            }
-        }
+                 return Ok($"MachineIds deleted successfully with Id: {machine.Id}");
+             }
+             catch
+             {
+                 return StatusCode(500, "Internal Server Error");
+             }
+         }
 
-        [HttpPut("machines/{id}")]
-        public async Task<IActionResult> UpdateMachine(int id, [FromBody] MachineDto request)
-        {
-            try
-            {
-                var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
+         [HttpPut("machines/{id}")]
+         public async Task<IActionResult> UpdateMachine(int id, [FromBody] MachineDto request)
+         {
+             try
+             {
+                 var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
 
-                if (machine == null)
-                {
-                    return NotFound(new { Error = "MachineIds not found." });
-                }
+                 if (machine == null)
+                 {
+                     return NotFound(new { Error = "MachineIds not found." });
+                 }
 
-                machine.Name = request.Name;
-                machine.Capacity = request.Capacity;
-                machine.Status = request.Status;
+                 machine.Name = request.Name;
+                 machine.Capacity = request.Capacity;
+                 machine.Status = request.Status;
 
 
-                _dbContext.Update(machine);
-                await _dbContext.SaveChangesAsync();
+                 _dbContext.Update(machine);
+                 await _dbContext.SaveChangesAsync();
 
-                return Ok($"MachineIds updated successfully with Id: {machine.Id}");
-            }
-            catch
-            {
-                return StatusCode(500, "Internal Server Error");
-            }
-        }
-        [HttpGet("machines/{id}")]
-        public async Task<IActionResult> GetMachineById(int id)
-        {
-            try
-            {
-                var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
+                 return Ok($"MachineIds updated successfully with Id: {machine.Id}");
+             }
+             catch
+             {
+                 return StatusCode(500, "Internal Server Error");
+             }
+         }
+         [HttpGet("machines/{id}")]
+         public async Task<IActionResult> GetMachineById(int id)
+         {
+             try
+             {
+                 var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
 
-                if (machine == null)
-                {
-                    return NotFound(new { Error = "MachineIds not found." });
-                }
+                 if (machine == null)
+                 {
+                     return NotFound(new { Error = "MachineIds not found." });
+                 }
 
-                var machineDto = new MachineDto
-                {
-                    Id = machine.Id,
-                    Name = machine.Name,
-                    Capacity = machine.Capacity,
-                    Status = machine.Status
-                };
+                 var machineDto = new MachineDto
+                 {
+                     Id = machine.Id,
+                     Name = machine.Name,
+                     Capacity = machine.Capacity,
+                     Status = machine.Status
+                 };
 
-                return Ok(machineDto);
-            }
-            catch
-            {
-                return StatusCode(500, "Internal Server Error");
-            }
-        }
-
-        [HttpGet("products")]
+                 return Ok(machineDto);
+             }
+             catch
+             {
+                 return StatusCode(500, "Internal Server Error");
+             }
+         }
+ */
+        /*[HttpGet("products")]
         public async Task<IActionResult> GetAllProducts()
         {
             try
@@ -202,7 +211,7 @@ namespace FYP.API.Controllers
                     return BadRequest("User email not found.");
                 }
 
-                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email && x.Role == "RetailerDto");
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email);
 
                 if (user == null)
                 {
@@ -253,7 +262,6 @@ namespace FYP.API.Controllers
                 {
                     Id = product.Id,
                     Name = product.Name,
-                    Description = product.Description,
                     Qauntity = product.Quantity,
                     Price = product.Price,
                     ProductImageUrl = product.ImageUrl
@@ -265,8 +273,8 @@ namespace FYP.API.Controllers
             {
                 return StatusCode(500, "Internal Server Error");
             }
-        }
-        [HttpPost("products")]
+        }*/
+        [HttpPost("items")]
         public async Task<IActionResult> AddProduct()
         {
             try
@@ -283,138 +291,141 @@ namespace FYP.API.Controllers
                     return BadRequest("User email not found.");
                 }
 
-                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email && x.Role == "RetailerDto");
-
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email);
                 if (user == null)
                 {
-                    return NotFound("RetailerDto not found.");
+                    return NotFound("User not found.");
                 }
-
-                var branch = await _dbContext.Branches.SingleOrDefaultAsync(b => b.Id == user.BranchId);
-
-                var products = await _dbContext.Products.ToListAsync();
-
-                if (branch == null)
+                var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(r => r.UserId == user.Id);
+                if (retailer == null)
                 {
-                    return NotFound("Branch not found.");
+                    return NotFound("Retailer Not Found");
                 }
 
+                var imagePath = await UploadImageAsync(file!);
 
-                var random = new Random();
-                IFormFile image = file!;
-                string fileName = name + random.Next(1, 9999) + "_" + products.Count + 1 + "." + image.FileName.Split('.')[1];
-                string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "Images", "Products");
-                string imagePath = Path.Combine(directoryPath, fileName);
-
-                Directory.CreateDirectory(directoryPath);
-
-                using (var stream = new FileStream(imagePath, FileMode.Create))
-                {
-                    image.CopyTo(stream);
-                }
-                var product = new LaundryItem()
+                var item = new LaundryItem()
                 {
                     Name = name!,
                     Description = description!,
                     Quantity = int.Parse(quantity.ToString()),
                     Price = int.Parse(price.ToString()),
                     ImageUrl = imagePath,
-                    BranchId = branch.Id,
-                    UserId = user.Id,
+                    BranchId = retailer.BranchId,
+                    RetailerId = retailer.Id
                 };
-                await _dbContext.Products.AddAsync(product);
+
+                await _dbContext.Items.AddAsync(item);
                 await _dbContext.SaveChangesAsync();
 
-                return Ok(new { Success = $"ProductsData Uploaded Successfully with Name : {product.Name}" });
-
+                return Ok(new { Success = $"ProductsData Uploaded Successfully with Name : {item.Name}" });
             }
             catch
             {
                 return StatusCode(500, "Internal Server Error");
             }
         }
-        [HttpPut("products/{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto request)
+
+        private async Task<string> UploadImageAsync(IFormFile file)
         {
-            try
+            var guid = Guid.NewGuid().ToString(); // Generate GUID
+            string fileName = guid + Path.GetExtension(file.FileName); // Append extension
+            string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "Images", "Products");
+            string imagePath = Path.Combine(directoryPath, fileName);
+
+            Directory.CreateDirectory(directoryPath);
+
+            using (var stream = new FileStream(imagePath, FileMode.Create))
             {
-                var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
-
-                if (product == null)
-                {
-                    return NotFound("ProductsData not found.");
-                }
-                product.Name = request.Name;
-                product.Description = request.Description;
-                product.Price = request.Price;
-                product.Quantity = request.Qauntity;
-
-                await _dbContext.SaveChangesAsync();
-
-                return Ok(new { Success = $"ProductsData Updated Successfully with Name : {product.Name}" });
+                await file.CopyToAsync(stream);
             }
-            catch
-            {
-                return StatusCode(500, "Internal Server Error");
-            }
-        }
-        [HttpDelete("products/{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            try
-            {
 
-                var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
-                if (product == null)
-                {
-                    return NotFound(new { Error = "ProductsData does not exist" });
-                }
-                _dbContext.Products.Remove(product);
-
-                return Ok($"ProductsData Delete with Id : {product.Id}");
-            }
-            catch
-            {
-                return StatusCode(500, "Internal Server Error");
-            }
+            return guid; // Return only the GUID without extension
         }
 
-        [HttpGet("bookings")]
-        public async Task<IActionResult> GetBookings()
-        {
-            try
-            {
-                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
 
-                if (string.IsNullOrEmpty(email))
+        /*
+                [HttpPut("products/{id}")]
+                public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto request)
                 {
-                    return BadRequest("User email not found.");
+                    try
+                    {
+                        var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
+
+                        if (product == null)
+                        {
+                            return NotFound("ProductsData not found.");
+                        }
+                        product.Name = request.Name;
+                        product.Description = request.Description;
+                        product.Price = request.Price;
+                        product.Quantity = request.Qauntity;
+
+                        await _dbContext.SaveChangesAsync();
+
+                        return Ok(new { Success = $"ProductsData Updated Successfully with Name : {product.Name}" });
+                    }
+                    catch
+                    {
+                        return StatusCode(500, "Internal Server Error");
+                    }
                 }
-
-                var user = await _dbContext.Users
-                    .Include(u => u.Branch)
-                    .SingleOrDefaultAsync(x => x.Email == email && x.Role == "RetailerDto");
-
-                if (user == null)
+                [HttpDelete("products/{id}")]
+                public async Task<IActionResult> DeleteProduct(int id)
                 {
-                    return NotFound("RetailerDto not found.");
+                    try
+                    {
+
+                        var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
+                        if (product == null)
+                        {
+                            return NotFound(new { Error = "ProductsData does not exist" });
+                        }
+                        _dbContext.Products.Remove(product);
+
+                        return Ok($"ProductsData Delete with Id : {product.Id}");
+                    }
+                    catch
+                    {
+                        return StatusCode(500, "Internal Server Error");
+                    }
                 }
-                var booking = await _dbContext.Bookings.Where(b => b.BranchId == user.BranchId).Select(b => new BookingDto
-                {
-                    StartTime = b.StartTime,
-                    EndTime = b.EndTime,
-                    Date = b.Date,
-                    Price = b.Price,
-                    Status = b.Status
-                }).ToListAsync();
+        */
+        /* [HttpGet("bookings")]
+         public async Task<IActionResult> GetBookings()
+         {
+             try
+             {
+                 var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
 
-                return Ok(booking);
-            }
-            catch
-            {
-                return StatusCode(500, "Internal Server Error");
-            }
-        }
+                 if (string.IsNullOrEmpty(email))
+                 {
+                     return BadRequest("User email not found.");
+                 }
+
+                 var user = await _dbContext.Users
+                     .Include(u => u.Branch)
+                     .SingleOrDefaultAsync(x => x.Email == email && x.Role == "RetailerDto");
+
+                 if (user == null)
+                 {
+                     return NotFound("RetailerDto not found.");
+                 }
+                 var booking = await _dbContext.Bookings.Where(b => b.BranchId == user.BranchId).Select(b => new BookingDto
+                 {
+                     StartTime = b.StartTime,
+                     EndTime = b.EndTime,
+                     Date = b.Date,
+                     Price = b.Price,
+                     Status = b.Status
+                 }).ToListAsync();
+
+                 return Ok(booking);
+             }
+             catch
+             {
+                 return StatusCode(500, "Internal Server Error");
+             }
+         }*/
     }
 }
-*/

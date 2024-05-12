@@ -41,8 +41,8 @@ namespace rjf.API
             {
                 options.AddPolicy("Admin",
                      policy => policy.RequireRole("Admin"));
-                options.AddPolicy("RetailerDto",
-                     policy => policy.RequireRole("RetailerDto"));
+                options.AddPolicy("Retailer",
+                     policy => policy.RequireRole("Retailer"));
                 options.AddPolicy("User",
                      policy => policy.RequireRole("User"));
             });

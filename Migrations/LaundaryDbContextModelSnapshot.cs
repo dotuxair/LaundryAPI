@@ -109,7 +109,7 @@ namespace FYP.API.Migrations
 
                     b.HasIndex("LaundryMachineId");
 
-                    b.ToTable("BookingMachines");
+                    b.ToTable("BookingDetails");
                 });
 
             modelBuilder.Entity("FYP.API.Models.Domain.Branch", b =>
@@ -151,6 +151,10 @@ namespace FYP.API.Migrations
                     b.Property<int?>("BranchId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -174,7 +178,7 @@ namespace FYP.API.Migrations
 
                     b.HasIndex("RetailerId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Items");
                 });
 
             modelBuilder.Entity("FYP.API.Models.Domain.LaundryMachine", b =>
@@ -324,7 +328,7 @@ namespace FYP.API.Migrations
 
                     b.HasIndex("LaundryItemId");
 
-                    b.ToTable("PurchasedProducts");
+                    b.ToTable("PurchasedItems");
                 });
 
             modelBuilder.Entity("FYP.API.Models.Domain.Retailer", b =>
@@ -382,10 +386,10 @@ namespace FYP.API.Migrations
                         new
                         {
                             Id = 1,
-                            Email = "dotuxair@gmail.com",
-                            Name = "Uxair Ijaz",
+                            Email = "admin@gmail.com",
+                            Name = "Admin",
                             Password = "abc@123",
-                            PhoneNumber = "0345-6756919"
+                            PhoneNumber = "0000-0000000"
                         });
                 });
 

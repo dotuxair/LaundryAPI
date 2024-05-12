@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FYP.API.Models.Domain
 {
@@ -8,6 +9,7 @@ namespace FYP.API.Models.Domain
         public string Name { get; set; } = string.Empty;
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+
 
         public int? AdminId { get; set; }
         public Admin? Admin { get; set; }

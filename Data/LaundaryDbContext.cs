@@ -10,12 +10,12 @@ namespace FYP.API.Data
         }
 
         public DbSet<Booking> Bookings { get; set; }
-        public DbSet<PurchasedItem> PurchasedProducts { get; set; }
-        public DbSet<BookingDetail> BookingMachines { get; set; }
+        public DbSet<PurchasedItem> PurchasedItems { get; set; }
+        public DbSet<BookingDetail> BookingDetails { get; set; }
         public DbSet<Branch> Branches { get; set; }
         public DbSet<LaundryMachine> Machines { get; set; }
         public DbSet<Offer> Offers { get; set; }
-        public DbSet<LaundryItem> Products { get; set; }
+        public DbSet<LaundryItem> Items { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Program> Programs { get; set; }
         public DbSet<Admin> Admins { get; set; }
@@ -30,16 +30,15 @@ namespace FYP.API.Data
          .WithOne(a => a.Admin)
          .HasForeignKey(b => b.AdminId);
 
-
             modelBuilder.Entity<User>()
                 .HasData(
                     new User
                     {
                         Id = 1,
-                        Name = "Uxair Ijaz",
-                        Email = "dotuxair@gmail.com",
+                        Name = "Admin",
+                        Email = "admin@gmail.com",
                         Password = "abc@123",
-                        PhoneNumber = "0345-6756919"
+                        PhoneNumber = "0000-0000000"
                     }
                 );
 
@@ -51,6 +50,7 @@ namespace FYP.API.Data
                         UserId = 1,
                     }
                 );
+         
             base.OnModelCreating(modelBuilder);
         }
     }

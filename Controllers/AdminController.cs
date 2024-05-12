@@ -409,7 +409,7 @@ namespace FYP.API.Controllers
             }
         }
 
-        [HttpGet("bookings/{id}")]
+       /* [HttpGet("bookings/{id}")]
         public async Task<IActionResult> GetBooking(int id)
         {
             try
@@ -420,11 +420,11 @@ namespace FYP.API.Controllers
                     return NotFound(new { Error = "Booking Not Found" });
                 }
 
-                var products = await _dbContext.PurchasedProducts
-                    .Where(p => p.BookingId == booking.Id)
+                var products = await _dbContext.Items
+                    .Where(p => p.B == booking.Id)
                     .ToListAsync();
 
-                var machines = await _dbContext.BookingMachines
+                var machines = await _dbContext.Items
                     .Where(p => p.BookingId == booking.Id)
                     .ToListAsync();
 
@@ -446,7 +446,7 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
-
+*/
         [HttpGet("programs")]
         public async Task<IActionResult> GetAllPrograms()
         {

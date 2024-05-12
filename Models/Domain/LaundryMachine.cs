@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FYP.API.Models.Domain
@@ -20,3 +21,6 @@ namespace FYP.API.Models.Domain
         public Retailer? Retailer { get; set; }
     }
 }
+
+
+
