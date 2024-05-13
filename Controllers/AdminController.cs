@@ -463,10 +463,10 @@ namespace FYP.API.Controllers
                         Type = program.Type,
                         Duration = program.Duration,
 
-                        SpinSpeed = program.Type == "washer" ? program.SpinSpeed : "",
-                        AirSpeed = program.Type == "dryer" ? program.SpinSpeed : "",
-                        WaterTemp = program.Type == "washer" ? program.Temprature : "",
-                        AirTemp = program.Type == "dryer" ? program.Temprature : "",
+                        SpinSpeed = program.Type == "Washer" ? program.SpinSpeed : "",
+                        AirSpeed = program.Type == "Dryer" ? program.SpinSpeed : "",
+                        WaterTemp = program.Type == "Washer" ? program.Temprature : "",
+                        AirTemp = program.Type == "Dryer" ? program.Temprature : "",
                         Price = program.Price
                     };
 
