@@ -200,6 +200,7 @@ namespace FYP.API.Controllers
 
 
 
+
         [HttpGet("machines-capacities/{type}")]
         public async Task<IActionResult> GetAllCapacities(string type)
         {
@@ -254,6 +255,29 @@ namespace FYP.API.Controllers
                 return StatusCode(500, new { Error = "Internal Server Error" });
             }
         }
+
+        [HttpGet("items/{type}")]
+        public async Task<IActionResult> GetLaundryItems(string type)
+        {
+            try
+            {
+                var items = await _dbContext.Items.Where(i => i.Type == type && i.Quantity > 0).Select(item => new
+                {
+                    Id = item.Id,
+                    Name = item.Name,
+                    Description = item.Description,
+                    Quantity = item.Quantity,
+                    Price = item.Price,
+                    ImageUrl = item.ImageUrl,
+                }).ToListAsync();
+                return Ok(items);
+            }
+            catch
+            {
+                return StatusCode(500, new { Error = "Internal Server Error" });
+            }
+        }
+
 
         [HttpGet("bookings")]
         public async Task<IActionResult> GetBookings()

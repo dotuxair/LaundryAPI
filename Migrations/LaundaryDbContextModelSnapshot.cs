@@ -172,6 +172,10 @@ namespace FYP.API.Migrations
                     b.Property<int?>("RetailerId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId");
