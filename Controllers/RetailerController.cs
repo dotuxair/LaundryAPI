@@ -20,7 +20,7 @@ namespace FYP.API.Controllers
             _dbContext = context;
         }
 
-       /* [HttpGet("machines")]
+        [HttpGet("machines")]
         public async Task<IActionResult> GetAllMachines()
         {
             try
@@ -32,14 +32,19 @@ namespace FYP.API.Controllers
                     return BadRequest("User email not found.");
                 }
 
-                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email && x.UserType == "Retailer");
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email);
 
                 if (user == null)
                 {
-                    return NotFound("RetailerDto not found.");
+                    return NotFound("User does not exist.");
+                }
+                var retailer =await  _dbContext.Retailers.SingleOrDefaultAsync(r => r.Id == user.Id);
+                if(retailer == null)
+                {
+                    return NotFound("Retailer not found.");
                 }
 
-                var branch = await _dbContext.Branches.SingleOrDefaultAsync(b => b.Id == user.BranchId);
+                var branch = await _dbContext.Branches.SingleOrDefaultAsync(b => b.Id == retailer.BranchId);
 
                 if (branch == null)
                 {
@@ -53,7 +58,8 @@ namespace FYP.API.Controllers
                 var machinesDtoList = machines.Select(machine => new GetMachinesDto
                 {
                     Id = machine.Id,
-                    Capacity = machine.LoadCapacity,
+                    LoadCapacity = machine.LoadCapacity,
+                    MachineCode = machine.MachineCode,
                     Status = machine.Status,
                 }).ToList();
 
@@ -64,7 +70,7 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
-        */
+
 
         [HttpPost("machines")]
         public async Task<IActionResult> AddMachine([FromBody] MachineDto request)
@@ -75,7 +81,12 @@ namespace FYP.API.Controllers
 
                 if (string.IsNullOrEmpty(email))
                 {
-                    return BadRequest("User email not found.");
+                    return BadRequest(new { ErrorMsg = "Token Expired, Login Again." });
+                }
+                var machineCodeExist = await _dbContext.Machines.SingleOrDefaultAsync(m => m.MachineCode == request.MachineCode);
+                if(machineCodeExist != null)
+                {
+                    return BadRequest(new { ErrorMsg = "MachineCode Already Exist." });
                 }
 
                 // Active , Busy , In-Maintenance
@@ -120,86 +131,86 @@ namespace FYP.API.Controllers
             {
                 return StatusCode(500, "Internal Server Error");
             }
-        } /*
-         [HttpDelete("machines/{id}")]
-         public async Task<IActionResult> DeleteMachine(int id)
-         {
-             try
-             {
-                 var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
+        }
 
-                 if (machine == null)
-                 {
-                     return NotFound(new { Error = "MachineIds not found." });
-                 }
+        [HttpDelete("machines/{id}")]
+        public async Task<IActionResult> DeleteMachine(int id)
+        {
+            try
+            {
+                var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
 
-                 _dbContext.Remove(machine);
-                 await _dbContext.SaveChangesAsync();
+                if (machine == null)
+                {
+                    return NotFound(new { Error = "Machine not found." });
+                }
 
-                 return Ok($"MachineIds deleted successfully with Id: {machine.Id}");
-             }
-             catch
-             {
-                 return StatusCode(500, "Internal Server Error");
-             }
-         }
+                _dbContext.Remove(machine);
+                await _dbContext.SaveChangesAsync();
 
-         [HttpPut("machines/{id}")]
-         public async Task<IActionResult> UpdateMachine(int id, [FromBody] MachineDto request)
-         {
-             try
-             {
-                 var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
+                return Ok($"MachineIds deleted successfully with Id: {machine.Id}");
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
 
-                 if (machine == null)
-                 {
-                     return NotFound(new { Error = "MachineIds not found." });
-                 }
+        [HttpPut("machines/{id}")]
+        public async Task<IActionResult> UpdateMachine(int id, [FromBody] MachineDto request)
+        {
+            try
+            {
+                var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
 
-                 machine.Name = request.Name;
-                 machine.Capacity = request.Capacity;
-                 machine.Status = request.Status;
+                if (machine == null)
+                {
+                    return NotFound(new { Error = "MachineIds not found." });
+                }
+
+                machine.LoadCapacity = request.LoadCapacity;
+                machine.Status = request.Status;
 
 
-                 _dbContext.Update(machine);
-                 await _dbContext.SaveChangesAsync();
+                _dbContext.Update(machine);
+                await _dbContext.SaveChangesAsync();
 
-                 return Ok($"MachineIds updated successfully with Id: {machine.Id}");
-             }
-             catch
-             {
-                 return StatusCode(500, "Internal Server Error");
-             }
-         }
-         [HttpGet("machines/{id}")]
-         public async Task<IActionResult> GetMachineById(int id)
-         {
-             try
-             {
-                 var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
+                return Ok($"MachineIds updated successfully with Id: {machine.Id}");
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
 
-                 if (machine == null)
-                 {
-                     return NotFound(new { Error = "MachineIds not found." });
-                 }
+        [HttpGet("machines/{id}")]
+        public async Task<IActionResult> GetMachineById(int id)
+        {
+            try
+            {
+                var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == id);
 
-                 var machineDto = new MachineDto
-                 {
-                     Id = machine.Id,
-                     Name = machine.Name,
-                     Capacity = machine.Capacity,
-                     Status = machine.Status
-                 };
+                if (machine == null)
+                {
+                    return NotFound(new { Error = "MachineIds not found." });
+                }
 
-                 return Ok(machineDto);
-             }
-             catch
-             {
-                 return StatusCode(500, "Internal Server Error");
-             }
-         }
- */
-        /*[HttpGet("products")]
+                var machineDto = new MachineDto
+                {
+                    Id = machine.Id,
+                    LoadCapacity = machine.LoadCapacity,
+                    Status = machine.Status
+                };
+
+                return Ok(machineDto);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpGet("items")]
         public async Task<IActionResult> GetAllProducts()
         {
             try
@@ -215,17 +226,22 @@ namespace FYP.API.Controllers
 
                 if (user == null)
                 {
-                    return NotFound("RetailerDto not found.");
+                    return NotFound("User not found.");
+                }
+                var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(r => r.Id == user.Id);
+                if(retailer == null)
+                {
+                    return NotFound("Retailer not found.");
                 }
 
-                var branch = await _dbContext.Branches.SingleOrDefaultAsync(b => b.Id == user.BranchId);
+                var branch = await _dbContext.Branches.SingleOrDefaultAsync(b => b.Id == retailer.BranchId);
 
                 if (branch == null)
                 {
                     return NotFound("Branch not found.");
                 }
 
-                var products = await _dbContext.Products
+                var products = await _dbContext.Items
                     .Where(m => m.BranchId == branch.Id)
                     .ToListAsync();
 
@@ -253,7 +269,7 @@ namespace FYP.API.Controllers
             try
             {
 
-                var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
+                var product = await _dbContext.Items.SingleOrDefaultAsync(p => p.Id == id);
                 if (product == null)
                 {
                     return NotFound(new { Error = "ProductsData does not exist" });
@@ -273,7 +289,7 @@ namespace FYP.API.Controllers
             {
                 return StatusCode(500, "Internal Server Error");
             }
-        }*/
+        }
         [HttpPost("items")]
         public async Task<IActionResult> AddProduct()
         {
@@ -329,7 +345,8 @@ namespace FYP.API.Controllers
         private async Task<string> UploadImageAsync(IFormFile file)
         {
             var guid = Guid.NewGuid().ToString(); // Generate GUID
-            string fileName = guid + Path.GetExtension(file.FileName); // Append extension
+            var extension = Path.GetExtension(file.FileName);
+            string fileName = guid+extension; // Append extension
             string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "Images", "Products");
             string imagePath = Path.Combine(directoryPath, fileName);
 
@@ -339,8 +356,8 @@ namespace FYP.API.Controllers
             {
                 await file.CopyToAsync(stream);
             }
-
-            return guid; // Return only the GUID without extension
+           
+            return guid+extension; // Return only the GUID without extension
         }
 
 

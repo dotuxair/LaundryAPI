@@ -12,6 +12,7 @@ namespace FYP.API.Models.Domain
         public int Quantity { get; set; }
         public int Price { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
 
         public int? BranchId { get; set; }
         public Branch? Branch { get; set; }
