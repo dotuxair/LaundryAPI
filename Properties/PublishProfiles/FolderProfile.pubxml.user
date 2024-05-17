@@ -5,13 +5,13 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
 <Project>
   <PropertyGroup>
     <TimeStampOfAssociatedLegacyPublishXmlFile />
-    <_PublishTargetUrl>D:\PublishedAPIs\FYP.API</_PublishTargetUrl>
-    <History>True|2024-05-25T18:15:34.6025995Z;True|2024-05-25T23:03:42.7755289+05:00;True|2024-05-25T22:45:28.4440144+05:00;True|2024-05-20T18:51:24.1882013+05:00;True|2024-05-20T18:31:48.4849862+05:00;True|2024-05-20T18:17:21.0521378+05:00;</History>
+    <_PublishTargetUrl>F:\IIS Deployment\FYP2.API</_PublishTargetUrl>
+    <History>True|2024-05-12T12:38:41.7422770Z;True|2024-05-04T03:54:47.7424013+05:00;False|2024-05-04T03:54:36.6801519+05:00;True|2024-04-28T23:49:24.2456756+05:00;False|2024-04-28T23:49:14.1763287+05:00;True|2024-04-21T02:37:56.2815924+05:00;False|2024-04-21T02:37:43.9624609+05:00;True|2024-04-21T02:21:31.6533445+05:00;False|2024-04-21T02:21:17.6048848+05:00;True|2024-04-19T23:58:06.7355409+05:00;</History>
     <LastFailureDetails />
   </PropertyGroup>
   <ItemGroup>
     <DestinationConnectionStrings Include="LaundryDb">
-      <Value>Server=Uxair\SQLEXPRESS%3bDatabase=LaundryDb%3bTrustServerCertificate=True%3bTrusted_Connection=True</Value>
+      <Value>Server=DESKTOP-F9PHHGA%3bDatabase=LaundryDb%3bUser Id=MirzaHamza%3bPassword=abc%3bTrustServerCertificate=True%3b</Value>
     </DestinationConnectionStrings>
   </ItemGroup>
   <ItemGroup>
