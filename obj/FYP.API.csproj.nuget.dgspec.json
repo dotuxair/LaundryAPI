@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\FYP Material\\Final_Year_Project\\FYP.API\\FYP.API\\FYP.API.csproj": {}
+    "F:\\fyp-Lms-Api\\FYP.API.csproj": {}
   },
   "projects": {
-    "D:\\FYP Material\\Final_Year_Project\\FYP.API\\FYP.API\\FYP.API.csproj": {
+    "F:\\fyp-Lms-Api\\FYP.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FYP Material\\Final_Year_Project\\FYP.API\\FYP.API\\FYP.API.csproj",
+        "projectUniqueName": "F:\\fyp-Lms-Api\\FYP.API.csproj",
         "projectName": "FYP.API",
-        "projectPath": "D:\\FYP Material\\Final_Year_Project\\FYP.API\\FYP.API\\FYP.API.csproj",
-        "packagesPath": "C:\\Users\\Uzair\\.nuget\\packages\\",
-        "outputPath": "D:\\FYP Material\\Final_Year_Project\\FYP.API\\FYP.API\\obj\\",
+        "projectPath": "F:\\fyp-Lms-Api\\FYP.API.csproj",
+        "packagesPath": "C:\\Users\\Mirza Hamza\\.nuget\\packages\\",
+        "outputPath": "F:\\fyp-Lms-Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Uzair\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Mirza Hamza\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -22,6 +22,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -87,7 +88,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.204/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
