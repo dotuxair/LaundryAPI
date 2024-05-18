@@ -10,7 +10,12 @@
         public int Distance { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-
+        public List<SelectedItemsList>? Items { get; set; }
     }
 
+    public class SelectedItemsList
+    {
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+    }
 }
