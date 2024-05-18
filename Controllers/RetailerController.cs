@@ -263,7 +263,8 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
-        [HttpGet("products/{id}")]
+
+        [HttpGet("items/{id}")]
         public async Task<IActionResult> GetProduct(int id)
         {
             try
@@ -290,6 +291,7 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
         [HttpPost("items")]
         public async Task<IActionResult> AddProduct()
         {

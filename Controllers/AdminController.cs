@@ -396,7 +396,6 @@ namespace FYP.API.Controllers
 
                 List<BookingDetailDto> bookingDetailDtos = bookings.Select(booking => new BookingDetailDto
                 {
-                    BookingDate = booking.BookingDate,
                     Id = booking.Id,
                     Price = booking.TotalPrice,
                     Status = booking.Status

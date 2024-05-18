@@ -214,16 +214,18 @@ namespace FYP.API.Controllers
                     .Select(m => new LoadCapacityDto
                     {
                         Id = m.Id,
-                        LoadCapacity = m.LoadCapacity
+                        LoadCapacity = m.LoadCapacity,
+                        Price = m.Price
                     })
                     .Select(m => new LoadCapacityDto
                     {
                         Id = m.Id,
                         LoadCapacity = m.LoadCapacity,
-                        LoadCapacityDescription = m.LoadCapacity == 5 ? "Compact (5 KG)" :
-                                                  m.LoadCapacity == 8 ? "Standard (8 KG)" :
-                                                  m.LoadCapacity == 12 ? "Large (12 KG)" :
-                                                  "Extra Large (15 KG +)"
+                        LoadCapacityDescription = m.LoadCapacity == 5 ? "Compact ( 5 KG )" :
+                                                  m.LoadCapacity == 8 ? "Standard ( 8 KG )" :
+                                                  m.LoadCapacity == 12 ? "Large ( 12 KG )" :
+                                                  "Extra Large ( 15 KG + )",
+                        Price = m.Price
                     })
                     .DistinctBy(m => m.LoadCapacity);
 
@@ -300,7 +302,7 @@ namespace FYP.API.Controllers
                 var booking = await _dbContext.Bookings.Where(b => b.UserId == user.Id).Select(b => new BookingDto
                 {
                     Id = b.Id,
-                    Date = b.BookingDate,
+
                     Price = b.TotalPrice,
                     Status = b.Status
                 }).ToListAsync();
@@ -312,50 +314,81 @@ namespace FYP.API.Controllers
             }
         }
 
-        /*
 
-                [HttpGet("getmachines")]
-                public async Task<IActionResult> GetAvailableMachineInfo([FromBody] ReceiveMachineRequestDto request)
+
+
+        [HttpPost("getmachines")]
+        public async Task<IActionResult> GetAvailableMachineInfo([FromBody] ReceivedRequestDto request)
+        {
+            try
+            {
+                double price = 0;
+                var program = await _dbContext.Programs.SingleOrDefaultAsync(p => p.Id == request.ProgramId);
+                if (program == null)
                 {
-                    try
+                    return BadRequest(new { ErrorMsg = "Bad Request" });
+                }
+                var machine = await _dbContext.Machines.SingleOrDefaultAsync(m => m.Id == request.ProgramId && m.MachineType == request.SelectedOption);
+                if (machine == null)
+                {
+                    return BadRequest(new { ErrorMsg = "Bad Request" });
+                }
+
+                price = (program.Price * request.Cycles) + machine.Price; // Managing Price
+
+                var totalBookingTime = request.BookingDate.AddMinutes(program.Duration * request.Cycles);
+                var bookingDate = request.BookingDate.Date;
+                var bookingStartTime = TimeOnly.FromDateTime(bookingDate);
+                var bookingEndTime = TimeOnly.FromDateTime(totalBookingTime);
+                var currentDate = DateTime.Now;
+
+                if (currentDate.Date > bookingDate)
+                {
+                    return BadRequest(new { ErrorMsg = "Please choose a correct date." });
+                }
+                else if (currentDate.Date == bookingDate && currentDate.TimeOfDay >= request.BookingDate.TimeOfDay)
+                {
+                    return BadRequest(new { ErrorMsg = "Please choose a correct time." });
+                }
+
+
+
+                var existingBookings = await _dbContext.Bookings
+     .Include(b => b.BookingDetails) 
+     .Where(b => b.BookingDate.Date == bookingDate.Date && 
+                 b.BookingDetails!.Any(bd => bd.StartTime <= bookingEndTime && bd.EndTime >= bookingStartTime))
+     .ToListAsync();
+
+
+
+                var response = new List<AvailableMachinesDto>();
+
+                var branches = await _dbContext.Branches.ToListAsync();
+
+                var allMachines = await _dbContext.Machines
+    .Where(m => m.Status == "Active" && (request.SelectedOption == "washer" ? m.MachineType == "Washer" : m.MachineType == "Dryer") && m.LoadCapacity == machine.LoadCapacity)
+    .ToListAsync();
+
+                foreach (var branch in branches)
+                {
+                    var availableMachinesDto = new AvailableMachinesDto
                     {
-                        var response = new List<AvailableMachinesDto>();
-                        var branches = await _dbContext.Branches.ToListAsync();
+                        BranchName = branch.Name,
+                        BranchId = branch.Id,
+                        Distance = _methods.GetDistance( request.Latitude, request.Longitude, branch.Latitude, branch.Longitude),
+                        Price = price
+                    };
+                  //  Distance = await _methods.GetDrivingDistanceAsync(request.Longitude, request.Latitude, branch.Longitude, branch.Latitude)
 
-                        var allMachines = await _dbContext.Machines.Where(m => m.Status == "Active").ToListAsync();
-
-                        foreach (var br in branches)
-                        {
-                            bool conditionMet = false;
-                            for (int i = 0; i < request.Requirements!.Count; i++)
-                            {
-                                var machines = allMachines.Where(m => m.BranchId == br.Id && m.LoadCapacity == request.Requirements[i].Capacity);
-                                if (machines == null)
-                                {
-                                    conditionMet = false;
-                                }
-                                conditionMet = true;
-                            }
-
-                            if (conditionMet)
-                            {
-                                var distance = _methods.GetDistance(request.Longitude, request.Latitude, br.Longitude, br.Latitude);
-                                var availableMachinesDto = new AvailableMachinesDto
-                                {
-                                    BranchName = br.Name,
-                                    Distance = distance,
-                                    BranchId = br.Id
-                                };
-                                response.Add(availableMachinesDto);
-                            }
-                        }
-
-                        return Ok(response.OrderBy(r=>r.Distance));
-                    }
-                    catch
-                    {
-                        return StatusCode(500, "Internal Server Error");
-                    }
-                }*/
+                    response.Add(availableMachinesDto);
+                    
+                }
+                return Ok(response.OrderBy(r => r.Distance));
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
     }
 }

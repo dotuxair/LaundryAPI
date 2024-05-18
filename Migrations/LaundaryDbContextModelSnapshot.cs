@@ -17,7 +17,7 @@ namespace FYP.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "8.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -55,8 +55,8 @@ namespace FYP.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateOnly>("BookingDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("BranchId")
                         .HasColumnType("int");
@@ -100,6 +100,9 @@ namespace FYP.API.Migrations
                     b.Property<int?>("LaundryMachineId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ProgramId")
+                        .HasColumnType("int");
+
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
@@ -108,6 +111,8 @@ namespace FYP.API.Migrations
                     b.HasIndex("BookingId");
 
                     b.HasIndex("LaundryMachineId");
+
+                    b.HasIndex("ProgramId");
 
                     b.ToTable("BookingDetails");
                 });
@@ -424,16 +429,22 @@ namespace FYP.API.Migrations
             modelBuilder.Entity("FYP.API.Models.Domain.BookingDetail", b =>
                 {
                     b.HasOne("FYP.API.Models.Domain.Booking", "Booking")
-                        .WithMany()
+                        .WithMany("BookingDetails")
                         .HasForeignKey("BookingId");
 
                     b.HasOne("FYP.API.Models.Domain.LaundryMachine", "LaundryMachine")
                         .WithMany()
                         .HasForeignKey("LaundryMachineId");
 
+                    b.HasOne("FYP.API.Models.Domain.Program", "Program")
+                        .WithMany()
+                        .HasForeignKey("ProgramId");
+
                     b.Navigation("Booking");
 
                     b.Navigation("LaundryMachine");
+
+                    b.Navigation("Program");
                 });
 
             modelBuilder.Entity("FYP.API.Models.Domain.Branch", b =>
@@ -536,6 +547,11 @@ namespace FYP.API.Migrations
             modelBuilder.Entity("FYP.API.Models.Domain.Admin", b =>
                 {
                     b.Navigation("Branches");
+                });
+
+            modelBuilder.Entity("FYP.API.Models.Domain.Booking", b =>
+                {
+                    b.Navigation("BookingDetails");
                 });
 #pragma warning restore 612, 618
         }

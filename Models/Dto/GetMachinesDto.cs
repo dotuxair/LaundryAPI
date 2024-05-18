@@ -12,5 +12,6 @@
         public int Id { get; set; }
         public int LoadCapacity { get; set; }
         public string LoadCapacityDescription { get; set; } = string.Empty;
+        public int Price { get; set; }
     }
 }

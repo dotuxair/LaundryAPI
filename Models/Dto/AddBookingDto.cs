@@ -4,27 +4,22 @@ namespace FYP.API.Models.Dto
 {
     public class AddBookingDto
     {
-        public TimeOnly StartTime { get; set; }
-        public TimeOnly EndTime { get; set; }
-        public DateOnly Date { get; set; }
+        public DateTime BookingDate { get; set; }
+
         public string Status { get; set; } = string.Empty;
 
-        public string WashCycle { get; set; } = string.Empty;
-        public string DryCycle { get; set; } = string.Empty;
+        public int Cycles { get; set; }
 
         public int TotalPrice { get; set; }
-        public List<ProductsData>? Products { get; set; }
         public int BranchId { get; set; }
-        public List<MachineIds>? Machines { get; set; }
+        public int MachineId { get; set; }
+        public int ProgramId { get; set; }
+        public List<ItemsDto>? Items { get; set; }
 
     }
-    public class ProductsData
+    public class ItemsDto
     {
         public int ProductId { get; set; }
         public int Quantity { get; set; }
-    }
-    public class MachineIds
-    {
-        public string Capacity { get; set; } = string.Empty;
     }
 }
