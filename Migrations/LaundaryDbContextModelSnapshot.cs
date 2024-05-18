@@ -100,9 +100,6 @@ namespace FYP.API.Migrations
                     b.Property<int?>("LaundryMachineId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ProgramId")
-                        .HasColumnType("int");
-
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
@@ -111,8 +108,6 @@ namespace FYP.API.Migrations
                     b.HasIndex("BookingId");
 
                     b.HasIndex("LaundryMachineId");
-
-                    b.HasIndex("ProgramId");
 
                     b.ToTable("BookingDetails");
                 });
@@ -436,15 +431,9 @@ namespace FYP.API.Migrations
                         .WithMany()
                         .HasForeignKey("LaundryMachineId");
 
-                    b.HasOne("FYP.API.Models.Domain.Program", "Program")
-                        .WithMany()
-                        .HasForeignKey("ProgramId");
-
                     b.Navigation("Booking");
 
                     b.Navigation("LaundryMachine");
-
-                    b.Navigation("Program");
                 });
 
             modelBuilder.Entity("FYP.API.Models.Domain.Branch", b =>

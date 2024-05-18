@@ -17,8 +17,7 @@ namespace FYP.API.Models.Domain
         public int? LaundryMachineId { get; set; }
         public LaundryMachine? LaundryMachine { get; set; }
 
-        public int? ProgramId { get; set; }
-        public Program? Program { get; set; }
+
 
     }
 }

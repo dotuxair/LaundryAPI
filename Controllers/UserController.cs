@@ -375,13 +375,13 @@ namespace FYP.API.Controllers
                     {
                         BranchName = branch.Name,
                         BranchId = branch.Id,
-                        Distance = _methods.GetDistance( request.Latitude, request.Longitude, branch.Latitude, branch.Longitude),
+                        Distance = _methods.GetDistance(request.Latitude, request.Longitude, branch.Latitude, branch.Longitude),
                         Price = price
                     };
                   //  Distance = await _methods.GetDrivingDistanceAsync(request.Longitude, request.Latitude, branch.Longitude, branch.Latitude)
 
                     response.Add(availableMachinesDto);
-                    
+
                 }
                 return Ok(response.OrderBy(r => r.Distance));
             }
