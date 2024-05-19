@@ -187,8 +187,8 @@ namespace FYP.API.Controllers
         {
             try
             {
-                var programs = await _dbContext.LaundryPrograms.Where(p => p.Type == type).ToListAsync();
-                return Ok(programs);
+                var programs = await _dbContext.Programs.Where(p => p.Type == type).ToListAsync();
+                return Ok(new { data = programs });
             }
             catch
             {
@@ -239,8 +239,7 @@ namespace FYP.API.Controllers
                     Latitude = b.Latitude,
                     Longitude = b.Longitude
                 }).ToListAsync();
-                return Ok(branches);
-
+                return Ok(new { data = branches });
             }
             catch
             {
@@ -262,7 +261,7 @@ namespace FYP.API.Controllers
                     Price = item.Price,
                     ImageUrl = item.ImageUrl,
                 }).ToListAsync();
-                return Ok(items);
+                return Ok(new { data = items });
             }
             catch
             {
@@ -296,7 +295,7 @@ namespace FYP.API.Controllers
                     Price = b.Price,
                     Status = b.Status
                 }).ToListAsync();
-                return Ok(booking);
+                return Ok(new { data = booking });
             }
             catch
             {
