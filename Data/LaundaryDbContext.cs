@@ -10,20 +10,31 @@ namespace FYP.API.Data
         }
 
         public DbSet<Booking> Bookings { get; set; }
-        public DbSet<PurchasedItem> PurchasedItems { get; set; }
+        public DbSet<PurchasedProduct> PurchasedProducts { get; set; }
         public DbSet<BookingDetail> BookingDetails { get; set; }
         public DbSet<Branch> Branches { get; set; }
-        public DbSet<LaundryMachine> Machines { get; set; }
+        public DbSet<Machine> Machines { get; set; }
         public DbSet<Offer> Offers { get; set; }
-        public DbSet<LaundryItem> Items { get; set; }
+        public DbSet<Product> Products { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<Program> Programs { get; set; }
         public DbSet<Admin> Admins { get; set; }
-        public DbSet<Retailer> Retailers { get; set; }
+        public DbSet<BranchManager> BranchManagers { get; set; }
+        public DbSet<LoadCapacity> LoadCapacity { get; set; }
+        public DbSet<BulkCloth> BulkClothes { get; set; }
+        public DbSet<LaundryProgram> LaundryPrograms { get; set; }
+
+
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<BulkCloth>()
+      .Property(b => b.PriceOffered)
+      .HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<BulkCloth>()
+  .Property(b => b.AcceptedPrice)
+  .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Admin>()
          .HasMany(a => a.Branches)

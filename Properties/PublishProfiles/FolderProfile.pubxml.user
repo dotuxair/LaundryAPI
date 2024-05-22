@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <_PublishTargetUrl>D:\PublishedAPIs\FYP.API</_PublishTargetUrl>
+    <History>True|2024-05-20T13:51:24.1882013Z;True|2024-05-20T18:31:48.4849862+05:00;True|2024-05-20T18:17:21.0521378+05:00;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="LaundryDb">
+      <Value>Server=Uxair\SQLEXPRESS%3bDatabase=LaundryDb%3bTrustServerCertificate=True%3bTrusted_Connection=True</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+  <ItemGroup>
+    <File Include="Models/Dto/AddBookingDto.cs">
+      <publishTime>05/17/2024 08:58:44</publishTime>
+    </File>
+    <File Include="Models/Dto/AvailableMachinesDto.cs">
+      <publishTime>05/19/2024 03:00:21</publishTime>
+    </File>
+    <File Include="Models/Dto/BookigRequestDto.cs">
+      <publishTime>05/19/2024 03:41:08</publishTime>
+    </File>
+    <File Include="Models/Dto/BookingDetailDto.cs">
+      <publishTime>03/08/2024 18:06:52</publishTime>
+    </File>
+    <File Include="Models/Dto/BookingDto.cs">
+      <publishTime>03/08/2024 18:10:03</publishTime>
+    </File>
+    <File Include="Models/Dto/BranchDto.cs">
+      <publishTime>01/03/2024 19:29:58</publishTime>
+    </File>
+    <File Include="Models/Dto/ChangePassword.cs">
+      <publishTime>03/08/2024 14:41:50</publishTime>
+    </File>
+    <File Include="Models/Dto/GetMachinesDto.cs">
+      <publishTime>05/22/2024 21:54:06</publishTime>
+    </File>
+    <File Include="Models/Dto/GetProductsDto.cs">
+      <publishTime>01/09/2024 17:12:03</publishTime>
+    </File>
+    <File Include="Models/Dto/MachineDto.cs">
+      <publishTime>05/11/2024 07:45:43</publishTime>
+    </File>
+    <File Include="Models/Dto/OfferDto.cs">
+      <publishTime>01/05/2024 18:58:04</publishTime>
+    </File>
+    <File Include="Models/Dto/ProductDto.cs">
+      <publishTime>01/09/2024 17:04:42</publishTime>
+    </File>
+    <File Include="Models/Dto/ProgramDto.cs">
+      <publishTime>03/24/2024 17:00:17</publishTime>
+    </File>
+    <File Include="Models/Dto/ReceiveMachineRequestDto.cs">
+      <publishTime>05/19/2024 03:13:15</publishTime>
+    </File>
+    <File Include="Models/Dto/RetailerDto.cs">
+      <publishTime>03/20/2024 10:58:35</publishTime>
+    </File>
+    <File Include="Models/Dto/SignInDto.cs">
+      <publishTime>01/05/2024 16:37:15</publishTime>
+    </File>
+    <File Include="Models/Dto/SignUpDto.cs">
+      <publishTime>03/14/2024 15:00:59</publishTime>
+    </File>
+    <File Include="Models/Dto/SystemUserDto.cs">
+      <publishTime>03/28/2024 08:38:26</publishTime>
+    </File>
+    <File Include="Models/Dto/TokenDto.cs">
+      <publishTime>01/03/2024 23:23:07</publishTime>
+    </File>
+    <File Include="Models/Dto/UpdateProfileDto.cs">
+      <publishTime>01/05/2024 18:51:16</publishTime>
+    </File>
+  </ItemGroup>
+</Project>

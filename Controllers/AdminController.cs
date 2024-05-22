@@ -29,7 +29,7 @@ namespace FYP.API.Controllers
                 var users = await _dbContext.Users.ToListAsync();
                 foreach (var user in users)
                 {
-                    var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(r => r.UserId == user.Id);
+                    var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.UserId == user.Id);
 
                     if (retailer != null)
                     {
@@ -121,12 +121,12 @@ namespace FYP.API.Controllers
                     await _dbContext.Users.AddAsync(retailorUser);
                     await _dbContext.SaveChangesAsync();
 
-                    var retailer = new Retailer()
+                    var retailer = new BranchManager()
                     {
                         UserId = retailorUser.Id,
                         BranchId = branch.Id,
                     };
-                    await _dbContext.Retailers.AddAsync(retailer);
+                    await _dbContext.BranchManagers.AddAsync(retailer);
                     await _dbContext.SaveChangesAsync();
 
                     return Ok(new { Success = "Retailer account created successfully" });
@@ -341,7 +341,7 @@ namespace FYP.API.Controllers
                 offer.Name = request.Name;
                 offer.StartDate = request.StartDate;
                 offer.EndDate = request.EndDate;
-                offer.Percentage = request.OffPercentage;
+                offer.OffPercentage = request.OffPercentage;
 
                 await _dbContext.SaveChangesAsync();
 
@@ -372,7 +372,7 @@ namespace FYP.API.Controllers
                     Name = request.Name,
                     EndDate = request.EndDate,
                     StartDate = request.StartDate,
-                    Percentage = request.OffPercentage,
+                    OffPercentage = request.OffPercentage,
                     Status = "Active",
                 };
 
@@ -397,7 +397,7 @@ namespace FYP.API.Controllers
                 List<BookingDetailDto> bookingDetailDtos = bookings.Select(booking => new BookingDetailDto
                 {
                     Id = booking.Id,
-                    Price = booking.TotalPrice,
+                    Price = booking.Price,
                     Status = booking.Status
                 }).ToList();
                 return Ok(bookingDetailDtos);
@@ -408,50 +408,50 @@ namespace FYP.API.Controllers
             }
         }
 
-       /* [HttpGet("bookings/{id}")]
-        public async Task<IActionResult> GetBooking(int id)
-        {
-            try
-            {
-                var booking = await _dbContext.Bookings.SingleOrDefaultAsync(b => b.Id == id);
-                if (booking == null)
-                {
-                    return NotFound(new { Error = "Booking Not Found" });
-                }
+        /* [HttpGet("bookings/{id}")]
+         public async Task<IActionResult> GetBooking(int id)
+         {
+             try
+             {
+                 var booking = await _dbContext.Bookings.SingleOrDefaultAsync(b => b.Id == id);
+                 if (booking == null)
+                 {
+                     return NotFound(new { Error = "Booking Not Found" });
+                 }
 
-                var products = await _dbContext.Items
-                    .Where(p => p.B == booking.Id)
-                    .ToListAsync();
+                 var products = await _dbContext.Items
+                     .Where(p => p.B == booking.Id)
+                     .ToListAsync();
 
-                var machines = await _dbContext.Items
-                    .Where(p => p.BookingId == booking.Id)
-                    .ToListAsync();
+                 var machines = await _dbContext.Items
+                     .Where(p => p.BookingId == booking.Id)
+                     .ToListAsync();
 
-                var bookingDetailDto = new BookingDetailDto
-                {
-                    Id = booking.Id,
-                    BookingDate = booking.BookingDate,
+                 var bookingDetailDto = new BookingDetailDto
+                 {
+                     Id = booking.Id,
+                     BookingDate = booking.BookingDate,
 
-                    Price = booking.TotalPrice,
-                    Status = booking.Status,
-                    Products = products.Select(p => new PurchasedProducts { Id = p.Id, Quantity = p.Quantity }).ToList(),
-                    // Machines = machines.Select(m => new MachineCycle { Id=m.Id,DryCycle = m.DryCycle , WashCycle = m.WashCycle}).ToList()
-                };
+                     Price = booking.TotalPrice,
+                     Status = booking.Status,
+                     Products = products.Select(p => new PurchasedProducts { Id = p.Id, Quantity = p.Quantity }).ToList(),
+                     // Machines = machines.Select(m => new MachineCycle { Id=m.Id,DryCycle = m.DryCycle , WashCycle = m.WashCycle}).ToList()
+                 };
 
-                return Ok(bookingDetailDto);
-            }
-            catch
-            {
-                return StatusCode(500, "Internal Server Error");
-            }
-        }
-*/
+                 return Ok(bookingDetailDto);
+             }
+             catch
+             {
+                 return StatusCode(500, "Internal Server Error");
+             }
+         }
+ */
         [HttpGet("programs")]
         public async Task<IActionResult> GetAllPrograms()
         {
             try
             {
-                var programs = await _dbContext.Programs.ToListAsync();
+                var programs = await _dbContext.LaundryPrograms.ToListAsync();
                 var allPrograms = new List<ProgramDto>();
                 foreach (var program in programs)
                 {
@@ -484,7 +484,7 @@ namespace FYP.API.Controllers
         {
             try
             {
-                var program = await _dbContext.Programs.SingleOrDefaultAsync(p => p.Id == id);
+                var program = await _dbContext.LaundryPrograms.SingleOrDefaultAsync(p => p.Id == id);
                 if (program == null)
                 {
                     return NotFound(new { Error = "Program does not exist" });
@@ -503,7 +503,7 @@ namespace FYP.API.Controllers
         {
             try
             {
-                var program = await _dbContext.Programs.SingleOrDefaultAsync(p => p.Id == id);
+                var program = await _dbContext.LaundryPrograms.SingleOrDefaultAsync(p => p.Id == id);
                 if (program == null)
                 {
                     return NotFound(new { Error = "Program does not exist" });
@@ -521,7 +521,7 @@ namespace FYP.API.Controllers
         {
             try
             {
-                var program = await _dbContext.Programs.SingleOrDefaultAsync(p => p.Id == id);
+                var program = await _dbContext.LaundryPrograms.SingleOrDefaultAsync(p => p.Id == id);
 
                 if (program == null)
                 {
@@ -554,7 +554,7 @@ namespace FYP.API.Controllers
 
                 var admin = await _dbContext.Admins.SingleOrDefaultAsync(a => a.UserId == user!.Id);
 
-                var program = new Program()
+                var program = new LaundryProgram()
                 {
                     Name = request.Name,
                     Temprature = request.Type == "washer" ? request.WaterTemp : request.AirTemp,
@@ -564,7 +564,7 @@ namespace FYP.API.Controllers
                     Price = request.Price,
                     AdminId = admin?.Id,
                 };
-                await _dbContext.Programs.AddAsync(program);
+                await _dbContext.LaundryPrograms.AddAsync(program);
                 await _dbContext.SaveChangesAsync();
                 return NoContent();
             }
@@ -581,7 +581,7 @@ namespace FYP.API.Controllers
             {
                 var users = await _dbContext.Users
                     .Where(u => !_dbContext.Admins.Any(a => a.UserId == u.Id) &&
-                                !_dbContext.Retailers.Any(r => r.UserId == u.Id))
+                                !_dbContext.BranchManagers.Any(r => r.UserId == u.Id))
                     .ToListAsync();
 
                 return Ok(users);
@@ -598,7 +598,7 @@ namespace FYP.API.Controllers
             try
             {
                 var adminAndRetailerUsers = await _dbContext.Users
-                    .Where(u => _dbContext.Admins.Any(a => a.UserId == u.Id) || _dbContext.Retailers.Any(r => r.UserId == u.Id))
+                    .Where(u => _dbContext.Admins.Any(a => a.UserId == u.Id) || _dbContext.BranchManagers.Any(r => r.UserId == u.Id))
                     .Select(u => new SystemUserDto
                     {
                         Id = u.Id,
@@ -624,7 +624,7 @@ namespace FYP.API.Controllers
             try
             {
                 var unassignedBranches = await _dbContext.Branches
-                    .Where(b => !_dbContext.Retailers.Any(r => r.BranchId == b.Id))
+                    .Where(b => !_dbContext.BranchManagers.Any(r => r.BranchId == b.Id))
                     .Select(b => new
                     {
                         BranchName = b.Name,
@@ -640,6 +640,87 @@ namespace FYP.API.Controllers
             }
         }
 
+
+        [HttpDelete("load-capacity/{id}")]
+        public async Task<IActionResult> RemoveLoadCapacity(int id)
+        {
+            try
+            {
+                var loadCapacity = await _dbContext.LoadCapacity.SingleOrDefaultAsync(p => p.Id == id);
+                if (loadCapacity == null)
+                {
+                    return NotFound(new { ErrorMsg = "Load Capacity does not exist" });
+                }
+                _dbContext.Remove(loadCapacity);
+                await _dbContext.SaveChangesAsync();
+                return NoContent();
+            }
+            catch
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
+            }
+        }
+
+
+        [HttpGet("load-capacity/{id}")]
+        public async Task<IActionResult> GetLoadCapacity(int id)
+        {
+            try
+            {
+                var loadCapacity = await _dbContext.LoadCapacity.SingleOrDefaultAsync(p => p.Id == id);
+                if (loadCapacity == null)
+                {
+                    return NotFound(new { ErrorMsg = "Load Capacity does not exist" });
+                }
+                return Ok(loadCapacity);
+            }
+            catch
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
+            }
+        }
+
+        [HttpPut("load-capacity/{id}")]
+        public async Task<IActionResult> UpdateLoadCapacity(int id, LoadCapacity load)
+        {
+            try
+            {
+                var loadCapacity = await _dbContext.LoadCapacity.SingleOrDefaultAsync(p => p.Id == id);
+                if (loadCapacity == null)
+                {
+                    return NotFound(new { ErrorMsg = "Load Capacity does not exist" });
+                }
+                loadCapacity.Name = load.Name;
+                loadCapacity.Price = loadCapacity.Price;
+                await _dbContext.SaveChangesAsync();
+                return Ok(new { SuccessMsg = $"LoadCapacity with Id : {loadCapacity.Id} updated successfully " });
+            }
+            catch
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
+            }
+        }
+
+        [HttpPost("load-capacity")]
+        public async Task<IActionResult> AddLoadCapacity(int id, LoadCapacity load)
+        {
+            try
+            {
+                var loadCapacity = new LoadCapacity
+                {
+                    Name = load.Name,
+                    Price = load.Price,
+                    Capacity = load.Capacity,
+                    Type = load.Type
+                };
+                await _dbContext.LoadCapacity.SingleOrDefaultAsync();
+                return Ok(new { SuccessMsg = $"LoadCapacity with Id : {loadCapacity.Id} Added successfully " });
+            }
+            catch
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
+            }
+        }
 
     }
 }

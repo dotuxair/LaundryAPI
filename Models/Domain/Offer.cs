@@ -8,15 +8,16 @@ namespace FYP.API.Models.Domain
         public string Name { get; set; } = string.Empty;
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
-        public int  Percentage { get; set; }
+        public int  OffPercentage { get; set; }
         public int PriceLimit { get; set; }
+        public bool OnPrice { get; set; }
         public string Status { get; set; } = string.Empty;
 
         public int? AdminId { get; set; }
         public Admin? Admin { get; set; }
 
-        public int? ProgramId { get; set; }
-        public Program? Program { get; set; }
+        public int? LaundryProgramId { get; set; }
+        public LaundryProgram? LaundryProgram { get; set; }
 
     }
 }

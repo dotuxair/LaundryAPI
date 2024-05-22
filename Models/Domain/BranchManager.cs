@@ -2,7 +2,7 @@
 
 namespace FYP.API.Models.Domain
 {
-    public class Retailer
+    public class BranchManager
     {
         public int Id { get; set; }
         public int? UserId { get; set; }

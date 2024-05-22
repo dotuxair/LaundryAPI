@@ -1,7 +1,7 @@
 ﻿
 namespace FYP.API.Models.Domain
 {
-    public class Program
+    public class LaundryProgram
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

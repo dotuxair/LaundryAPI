@@ -4,6 +4,8 @@ using FYP.API.Models.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Linq.Expressions;
 using System.Security.Claims;
 
 namespace FYP.API.Controllers
@@ -38,8 +40,8 @@ namespace FYP.API.Controllers
                 {
                     return NotFound("User does not exist.");
                 }
-                var retailer =await  _dbContext.Retailers.SingleOrDefaultAsync(r => r.Id == user.Id);
-                if(retailer == null)
+                var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.Id == user.Id);
+                if (retailer == null)
                 {
                     return NotFound("Retailer not found.");
                 }
@@ -58,7 +60,6 @@ namespace FYP.API.Controllers
                 var machinesDtoList = machines.Select(machine => new GetMachinesDto
                 {
                     Id = machine.Id,
-                    LoadCapacity = machine.LoadCapacity,
                     MachineCode = machine.MachineCode,
                     Status = machine.Status,
                 }).ToList();
@@ -84,7 +85,7 @@ namespace FYP.API.Controllers
                     return BadRequest(new { ErrorMsg = "Token Expired, Login Again." });
                 }
                 var machineCodeExist = await _dbContext.Machines.SingleOrDefaultAsync(m => m.MachineCode == request.MachineCode);
-                if(machineCodeExist != null)
+                if (machineCodeExist != null)
                 {
                     return BadRequest(new { ErrorMsg = "MachineCode Already Exist." });
                 }
@@ -95,10 +96,10 @@ namespace FYP.API.Controllers
 
                 if (user == null)
                 {
-                    return NotFound(new {ErrorMsg = "User does not exist."});
+                    return NotFound(new { ErrorMsg = "User does not exist." });
                 }
-                var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(r => r.UserId == user.Id);
-                if(retailer == null)
+                var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.UserId == user.Id);
+                if (retailer == null)
                 {
                     return NotFound(new { ErrorMsg = "Retailer does not exist." });
                 }
@@ -110,14 +111,13 @@ namespace FYP.API.Controllers
                     return NotFound(new { ErrorMsg = "Branch not found for the Retailer." });
                 }
 
-                var machine = new LaundryMachine
+                var machine = new Machine
                 {
                     MachineCode = request.MachineCode,
                     Status = request.Status,
                     Price = request.Price,
-                    MachineType = request.MachineType,
-                    LoadCapacity = request.LoadCapacity,
-                    RetailerId = retailer.Id,
+                    Type = request.MachineType,
+                    LoadCapacityId = request.LoadCapacity,
                     BranchId = branch.Id,
                 };
 
@@ -125,7 +125,7 @@ namespace FYP.API.Controllers
                 await _dbContext.Machines.AddAsync(machine);
                 await _dbContext.SaveChangesAsync();
 
-                return Ok(new {SuccessMsg = $"Machine Added in {branch.Name}  Successfully."});
+                return Ok(new { SuccessMsg = $"Machine Added in {branch.Name}  Successfully." });
             }
             catch
             {
@@ -168,7 +168,7 @@ namespace FYP.API.Controllers
                     return NotFound(new { Error = "MachineIds not found." });
                 }
 
-                machine.LoadCapacity = request.LoadCapacity;
+                machine.LoadCapacityId = request.LoadCapacity;
                 machine.Status = request.Status;
 
 
@@ -198,7 +198,6 @@ namespace FYP.API.Controllers
                 var machineDto = new MachineDto
                 {
                     Id = machine.Id,
-                    LoadCapacity = machine.LoadCapacity,
                     Status = machine.Status
                 };
 
@@ -228,8 +227,8 @@ namespace FYP.API.Controllers
                 {
                     return NotFound("User not found.");
                 }
-                var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(r => r.Id == user.Id);
-                if(retailer == null)
+                var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.Id == user.Id);
+                if (retailer == null)
                 {
                     return NotFound("Retailer not found.");
                 }
@@ -241,7 +240,7 @@ namespace FYP.API.Controllers
                     return NotFound("Branch not found.");
                 }
 
-                var products = await _dbContext.Items
+                var products = await _dbContext.Products
                     .Where(m => m.BranchId == branch.Id)
                     .ToListAsync();
 
@@ -270,7 +269,7 @@ namespace FYP.API.Controllers
             try
             {
 
-                var product = await _dbContext.Items.SingleOrDefaultAsync(p => p.Id == id);
+                var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
                 if (product == null)
                 {
                     return NotFound(new { Error = "ProductsData does not exist" });
@@ -314,7 +313,7 @@ namespace FYP.API.Controllers
                 {
                     return NotFound("User not found.");
                 }
-                var retailer = await _dbContext.Retailers.SingleOrDefaultAsync(r => r.UserId == user.Id);
+                var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.UserId == user.Id);
                 if (retailer == null)
                 {
                     return NotFound("Retailer Not Found");
@@ -322,7 +321,7 @@ namespace FYP.API.Controllers
 
                 var imagePath = await UploadImageAsync(file!);
 
-                var item = new LaundryItem()
+                var item = new Product()
                 {
                     Name = name!,
                     Description = description!,
@@ -330,10 +329,9 @@ namespace FYP.API.Controllers
                     Price = int.Parse(price.ToString()),
                     ImageUrl = imagePath,
                     BranchId = retailer.BranchId,
-                    RetailerId = retailer.Id
                 };
 
-                await _dbContext.Items.AddAsync(item);
+                await _dbContext.Products.AddAsync(item);
                 await _dbContext.SaveChangesAsync();
 
                 return Ok(new { Success = $"ProductsData Uploaded Successfully with Name : {item.Name}" });
@@ -348,7 +346,7 @@ namespace FYP.API.Controllers
         {
             var guid = Guid.NewGuid().ToString(); // Generate GUID
             var extension = Path.GetExtension(file.FileName);
-            string fileName = guid+extension; // Append extension
+            string fileName = guid + extension; // Append extension
             string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "Images", "Products");
             string imagePath = Path.Combine(directoryPath, fileName);
 
@@ -358,8 +356,8 @@ namespace FYP.API.Controllers
             {
                 await file.CopyToAsync(stream);
             }
-           
-            return guid+extension; // Return only the GUID without extension
+
+            return guid + extension; // Return only the GUID without extension
         }
 
 
@@ -446,5 +444,189 @@ namespace FYP.API.Controllers
                  return StatusCode(500, "Internal Server Error");
              }
          }*/
+
+        [HttpGet("getBulkRequests")]
+        public async Task<IActionResult> GetBulkRequests()
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                    return BadRequest(new { ErrorMsg = "Token Expired or Invalid. Please login again." });
+
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email);
+                if (user == null)
+                    return NotFound(new { ErrorMsg = "User not found." });
+
+                var retailer = await _dbContext.BranchManagers.FirstOrDefaultAsync(r => r.UserId == user.Id);
+                if (retailer == null)
+                    return NotFound(new { ErrorMsg = "Retailer not found." });
+
+                var requests = await _dbContext.BulkClothes.Where(b => b.BranchId == retailer.BranchId).ToListAsync();
+                return Ok(requests);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error: " + ex.Message });
+            }
+        }
+
+
+        [HttpGet("getBulkRequests/{id}")]
+        public async Task<IActionResult> GetBulkRequest(int id)
+        {
+            try
+            {
+                var requests = await _dbContext.BulkClothes.Where(b => b.Id == id).ToListAsync();
+                return Ok(requests);
+            }
+           
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error: " + ex.Message });
+            }
+        }
+
+
+        [HttpPost("getAllBulkRequests")]
+        public async Task<IActionResult> UpdatePrice()
+        {
+            try
+            {
+
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                    return BadRequest(new { ErrorMsg = "Token Expired or Invalid. Please login again." });
+
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email);
+                if (user == null)
+                    return NotFound(new { ErrorMsg = "User not found." });
+
+                
+
+                var bulk = await _dbContext.BulkClothes.Where(b => b.UserId == user.Id).ToListAsync();
+                if (bulk == null)
+                {
+                return BadRequest(new { SuccessMsg = "Bulk Cloth not found." });
+
+                }
+
+                return Ok(bulk);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error: " + ex.Message });
+            }
+        }
+
+
+        [HttpPost("accept/{id}")]
+        public async Task<IActionResult> AcceptRequest(int id)
+        {
+            try
+            {
+                if (id <= 0)
+                    return BadRequest(new { ErrorMsg = "Invalid ID." });
+
+                var bulk = await _dbContext.BulkClothes.FirstOrDefaultAsync(b => b.Id == id);
+                if (bulk == null)
+                    return NotFound(new { ErrorMsg = "Bulk Cloth request not found." });
+
+                bulk.AcceptedPrice = bulk.PriceOffered;
+                bulk.DateAccepted = DateTime.Now;
+                bulk.Status = "Accepted";
+                bulk.PaymentStatus = "Not Paid";
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { SuccessMsg = "Bulk Cloth Accepted Successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error: " + ex.Message });
+            }
+        }
+
+
+        [HttpPost("bulkCloth/{id}")]
+        public async Task<IActionResult> getBulkCloth(int id)
+        {
+            try
+            {
+                if (id == 0)
+                {
+                    return BadRequest(new { ErrorMsg = "Id Cannt be null and empty.." });
+
+                };
+                var bulk = await _dbContext.BulkClothes.SingleOrDefaultAsync(b => b.Id == id);
+                if (bulk == null)
+                {
+                    return NotFound(new { ErrorMsg = "Bulk Cloth request does not exist" });
+                }
+                else
+                {
+                    bulk.AcceptedPrice = bulk.PriceOffered;
+                    bulk.DateAccepted = DateTime.Now.Date;
+                    bulk.Status = "Accepted";
+                    bulk.PaymentStatus = "Not Paid";
+                    await _dbContext.SaveChangesAsync();
+                    return Ok(new { SuccessMsg = "Bulk Cloth Reqyested Accepted Successfully." });
+                }
+            }
+
+            catch
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error," });
+
+            }
+        }
+        [HttpPut("bulkCloth/{id}")]
+        public async Task<IActionResult> UpdateBulkClothStatus(int id, string status)
+        {
+            try
+            {
+                if (id <= 0 || string.IsNullOrEmpty(status))
+                    return BadRequest(new { ErrorMsg = "Invalid ID or Status." });
+
+                var bulk = await _dbContext.BulkClothes.FirstOrDefaultAsync(b => b.Id == id);
+                if (bulk == null)
+                    return NotFound(new { ErrorMsg = "Bulk Cloth request not found." });
+
+                bulk.Status = status;
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { SuccessMsg = $"Bulk Cloth Status updated to '{status}' successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error: " + ex.Message });
+            }
+        }
+        [HttpPut("completed/{id}")]
+        public async Task<IActionResult> CompleteBulkCloth(int id)
+        {
+            try
+            {
+                if (id <= 0)
+                    return BadRequest(new { ErrorMsg = "Invalid ID." });
+
+                var bulk = await _dbContext.BulkClothes.FirstOrDefaultAsync(b => b.Id == id);
+                if (bulk == null)
+                    return NotFound(new { ErrorMsg = "Bulk Cloth request not found." });
+
+                bulk.Status = "Completed";
+                bulk.DateCompleted = DateTime.Now.Date;
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { SuccessMsg = "Bulk Cloth Status updated to 'Completed' successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error: " + ex.Message });
+            }
+        }
+
+
     }
 }
