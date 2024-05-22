@@ -140,9 +140,6 @@ D:\FYP Material\Final_Year_Project\FYP.API\FYP.API\obj\Debug\net8.0\ref\FYP.API.
 <<<<<<< HEAD
 D:\FYP Material\Final_Year_Project\FYP.API\FYP.API\bin\Debug\net8.0\Newtonsoft.Json.dll
 =======
-<<<<<<< HEAD
-=======
-D:\FYP Material\Final_Year_Project\FYP.API\FYP.API\obj\Debug\net8.0\FYP.API.sourcelink.json
 F:\fyp-Lms-Api\bin\Debug\net8.0\appsettings.Development.json
 F:\fyp-Lms-Api\bin\Debug\net8.0\appsettings.json
 F:\fyp-Lms-Api\bin\Debug\net8.0\FYP.API.exe
@@ -283,3 +280,4 @@ F:\fyp-Lms-Api\obj\Debug\net8.0\FYP.API.genruntimeconfig.cache
 F:\fyp-Lms-Api\obj\Debug\net8.0\ref\FYP.API.dll
 >>>>>>> 62032a1 (hamza-work)
 >>>>>>> b816c22 (hamza-work)
+F:\fyp-Lms-Api\bin\Debug\net8.0\Newtonsoft.Json.dll

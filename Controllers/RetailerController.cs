@@ -66,8 +66,7 @@ namespace FYP.API.Controllers
                     MachineType =machine.Type,
                     Price = getPrice(machine.LoadCapacityId),
                 }).ToList();
-
-                return Ok(machinesDtoList);
+                return Ok(new { data = machinesDtoList });
             }
             catch
             {
