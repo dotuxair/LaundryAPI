@@ -566,7 +566,8 @@ namespace FYP.API.Controllers
                     };
                     allPrograms.Add(p);
                 }
-                return Ok(allPrograms);
+                
+                return Ok(new { data = allPrograms });
             }
             catch
             {
@@ -823,6 +824,11 @@ namespace FYP.API.Controllers
         {
             try
             {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value.ToString();
+                var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == email);
+
+                var admin = await _dbContext.Admins.SingleOrDefaultAsync(a => a.UserId == user!.Id);
+
                 var loadCapacity = new LoadCapacity
                 {
                     Name = load.Name,
@@ -839,6 +845,34 @@ namespace FYP.API.Controllers
             catch
             {
                 return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
+            }
+        }
+        [HttpGet("load-capacity")]
+        public async Task<IActionResult> GetAllLoadCapacity()
+        {
+            try
+            {
+                var loadCapacity = await _dbContext.LoadCapacity.ToListAsync();
+                var allLoadCapacity= new List<LoadCapacity>();
+                foreach (var program in loadCapacity)
+                {
+                    var p = new LoadCapacity()
+                    {
+                        Id = program.Id,
+                        Name = program.Name,
+                        Type = program.Type,
+                        Description=program.Description,
+                        Price = program.Price
+                    };
+
+                    allLoadCapacity.Add(p);
+                }
+
+                return Ok(new { data = allLoadCapacity });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
             }
         }
 

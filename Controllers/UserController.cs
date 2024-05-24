@@ -187,7 +187,7 @@ namespace FYP.API.Controllers
         {
             try
             {
-                var programs = await _dbContext.Programs.Where(p => p.Type == type).ToListAsync();
+                var programs = await _dbContext.LaundryPrograms.Where(p => p.Type == type).ToListAsync();
                 return Ok(new { data = programs });
             }
             catch

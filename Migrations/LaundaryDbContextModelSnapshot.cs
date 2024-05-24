@@ -670,11 +670,6 @@ namespace FYP.API.Migrations
                 {
                     b.Navigation("BranchManager");
                 });
-
-            modelBuilder.Entity("FYP.API.Models.Domain.User", b =>
-                {
-                    b.Navigation("BranchManager");
-                });
 #pragma warning restore 612, 618
         }
     }
