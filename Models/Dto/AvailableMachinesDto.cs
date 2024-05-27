@@ -15,16 +15,24 @@
         public string BranchName { get; set; } = string.Empty;
         public double Distance { get; set; }
         public int BranchId { get; set; }
+    }
+
+    public class AvailableMachines
+    {
         public int MachineId { get; set; }
+        public int ProgramId { get; set; }
+        public DateTime BookingDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public int BranchId { get; set; }
+
     }
 
     public class AvailableMachinesDto
     {
-        public List<BranchesData> ReceivedMachines { get; set; } = new List<BranchesData>();
+        public List<BranchesData> BranchesList { get; set; } = new List<BranchesData>();
+        public List<AvailableMachines> MachinesList { get; set; } = new List<AvailableMachines>();
         public double Price { get; set; }
         public double DiscountedPrice { get; set; }
-        public DateTime BookingDate { get; set; }
-        public DateTime EndDate { get; set; }
     }
 
 }

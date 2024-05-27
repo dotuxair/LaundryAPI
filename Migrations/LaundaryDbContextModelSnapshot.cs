@@ -91,6 +91,9 @@ namespace FYP.API.Migrations
                     b.Property<int?>("BookingId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Cycles")
+                        .HasColumnType("int");
+
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time");
 
@@ -98,9 +101,6 @@ namespace FYP.API.Migrations
                         .HasColumnType("int");
 
                     b.Property<int?>("MachineId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Rounds")
                         .HasColumnType("int");
 
                     b.Property<TimeOnly>("StartTime")
@@ -161,9 +161,12 @@ namespace FYP.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
+                    b.HasIndex("BranchId")
+                        .IsUnique();
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("BranchManagers");
                 });
@@ -194,6 +197,12 @@ namespace FYP.API.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("InformManager")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("InformUser")
+                        .HasColumnType("bit");
 
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
@@ -246,9 +255,8 @@ namespace FYP.API.Migrations
                     b.Property<int>("Price")
                         .HasColumnType("int");
 
-                    b.Property<string>("SpinSpeed")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("SpinSpeed")
+                        .HasColumnType("int");
 
                     b.Property<string>("Temprature")
                         .IsRequired()
@@ -319,9 +327,6 @@ namespace FYP.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Price")
-                        .HasColumnType("int");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -350,8 +355,8 @@ namespace FYP.API.Migrations
                     b.Property<int?>("AdminId")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("LaundryProgramId")
                         .HasColumnType("int");
@@ -363,14 +368,8 @@ namespace FYP.API.Migrations
                     b.Property<int>("OffPercentage")
                         .HasColumnType("int");
 
-                    b.Property<bool>("OnPrice")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("PriceLimit")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -547,14 +546,15 @@ namespace FYP.API.Migrations
             modelBuilder.Entity("FYP.API.Models.Domain.BranchManager", b =>
                 {
                     b.HasOne("FYP.API.Models.Domain.Branch", "Branch")
-                        .WithMany()
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .WithOne("BranchManager")
+                        .HasForeignKey("FYP.API.Models.Domain.BranchManager", "BranchId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("FYP.API.Models.Domain.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                        .WithOne("BranchManager")
+                        .HasForeignKey("FYP.API.Models.Domain.BranchManager", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Branch");
 
@@ -664,6 +664,16 @@ namespace FYP.API.Migrations
             modelBuilder.Entity("FYP.API.Models.Domain.Booking", b =>
                 {
                     b.Navigation("BookingDetails");
+                });
+
+            modelBuilder.Entity("FYP.API.Models.Domain.Branch", b =>
+                {
+                    b.Navigation("BranchManager");
+                });
+
+            modelBuilder.Entity("FYP.API.Models.Domain.User", b =>
+                {
+                    b.Navigation("BranchManager");
                 });
 #pragma warning restore 612, 618
         }

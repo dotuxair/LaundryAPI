@@ -10,7 +10,6 @@ namespace FYP.API.Models.Domain
         public string MachineCode { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
-        public int Price { get; set; }
 
 
         public int BranchId { get; set; }

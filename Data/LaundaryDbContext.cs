@@ -36,6 +36,19 @@ namespace FYP.API.Data
   .Property(b => b.AcceptedPrice)
   .HasColumnType("decimal(18,2)");
 
+            modelBuilder.Entity<Branch>()
+            .HasOne(b => b.BranchManager)
+            .WithOne(r => r.Branch)
+            .HasForeignKey<BranchManager>(r => r.BranchId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+
+            modelBuilder.Entity<User>()
+        .HasOne(u => u.BranchManager)
+        .WithOne(bm => bm.User)
+        .HasForeignKey<BranchManager>(bm => bm.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Admin>()
          .HasMany(a => a.Branches)
          .WithOne(a => a.Admin)
@@ -61,7 +74,7 @@ namespace FYP.API.Data
                         UserId = 1,
                     }
                 );
-         
+
             base.OnModelCreating(modelBuilder);
         }
     }

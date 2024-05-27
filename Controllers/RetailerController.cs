@@ -12,7 +12,7 @@ namespace FYP.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "Retailer")]
+    [Authorize(Policy = "BranchManager")]
 
     public class RetailerController : ControllerBase
     {
@@ -40,7 +40,8 @@ namespace FYP.API.Controllers
                 {
                     return NotFound("User does not exist.");
                 }
-                var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.Id == user.Id);
+
+                var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.UserId == user.Id);
                 if (retailer == null)
                 {
                     return NotFound("Retailer not found.");
@@ -62,6 +63,8 @@ namespace FYP.API.Controllers
                     Id = machine.Id,
                     MachineCode = machine.MachineCode,
                     Status = machine.Status,
+                    MachineType =machine.Type,
+                    Price = getPrice(machine.LoadCapacityId),
                 }).ToList();
 
                 return Ok(machinesDtoList);
@@ -71,6 +74,11 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+        double getPrice(int id)
+        {
+            var load = _dbContext.LoadCapacity.SingleOrDefault(l => l.Id == id);
+            return load!.Price;
+        }
 
 
         [HttpPost("machines")]
@@ -78,6 +86,7 @@ namespace FYP.API.Controllers
         {
             try
             {
+                
                 var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
 
                 if (string.IsNullOrEmpty(email))
@@ -111,16 +120,15 @@ namespace FYP.API.Controllers
                     return NotFound(new { ErrorMsg = "Branch not found for the Retailer." });
                 }
 
+
                 var machine = new Machine
                 {
                     MachineCode = request.MachineCode,
-                    Status = request.Status,
-                    Price = request.Price,
+                    Status = "Ready",
                     Type = request.MachineType,
-                    LoadCapacityId = request.LoadCapacity,
                     BranchId = branch.Id,
+                    LoadCapacityId = request.loadCapacity,
                 };
-
 
                 await _dbContext.Machines.AddAsync(machine);
                 await _dbContext.SaveChangesAsync();
@@ -156,6 +164,7 @@ namespace FYP.API.Controllers
             }
         }
 
+
         [HttpPut("machines/{id}")]
         public async Task<IActionResult> UpdateMachine(int id, [FromBody] MachineDto request)
         {
@@ -168,9 +177,7 @@ namespace FYP.API.Controllers
                     return NotFound(new { Error = "MachineIds not found." });
                 }
 
-                machine.LoadCapacityId = request.LoadCapacity;
                 machine.Status = request.Status;
-
 
                 _dbContext.Update(machine);
                 await _dbContext.SaveChangesAsync();
@@ -227,7 +234,7 @@ namespace FYP.API.Controllers
                 {
                     return NotFound("User not found.");
                 }
-                var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.Id == user.Id);
+                var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.UserId == user.Id);
                 if (retailer == null)
                 {
                     return NotFound("Retailer not found.");
@@ -249,7 +256,7 @@ namespace FYP.API.Controllers
                     Id = product.Id,
                     Name = product.Name,
                     Description = product.Description,
-                    Qauntity = product.Quantity,
+                    Quantity = product.Quantity,
                     Price = product.Price,
                     ProductImageUrl = product.ImageUrl,
                 }).ToList();
@@ -278,11 +285,11 @@ namespace FYP.API.Controllers
                 {
                     Id = product.Id,
                     Name = product.Name,
-                    Qauntity = product.Quantity,
+                    Quantity = product.Quantity,
                     Price = product.Price,
+                    Description = product.Description,
                     ProductImageUrl = product.ImageUrl
                 };
-
                 return Ok(pr);
             }
             catch
@@ -301,6 +308,8 @@ namespace FYP.API.Controllers
                 var description = Request.Form["description"];
                 var price = Request.Form["price"];
                 var quantity = Request.Form["quantity"];
+                //var type = Request.Form["type"];
+
 
                 var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
                 if (string.IsNullOrEmpty(email))
@@ -328,6 +337,7 @@ namespace FYP.API.Controllers
                     Quantity = int.Parse(quantity.ToString()),
                     Price = int.Parse(price.ToString()),
                     ImageUrl = imagePath,
+                    ProductType ="Washer",
                     BranchId = retailer.BranchId,
                 };
 
@@ -361,53 +371,55 @@ namespace FYP.API.Controllers
         }
 
 
-        /*
-                [HttpPut("products/{id}")]
-                public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto request)
+
+        [HttpPut("items/{id}")]
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto request)
+        {
+            try
+            {
+                var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
+
+                if (product == null)
                 {
-                    try
-                    {
-                        var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
-
-                        if (product == null)
-                        {
-                            return NotFound("ProductsData not found.");
-                        }
-                        product.Name = request.Name;
-                        product.Description = request.Description;
-                        product.Price = request.Price;
-                        product.Quantity = request.Qauntity;
-
-                        await _dbContext.SaveChangesAsync();
-
-                        return Ok(new { Success = $"ProductsData Updated Successfully with Name : {product.Name}" });
-                    }
-                    catch
-                    {
-                        return StatusCode(500, "Internal Server Error");
-                    }
+                    return NotFound("Item not found.");
                 }
-                [HttpDelete("products/{id}")]
-                public async Task<IActionResult> DeleteProduct(int id)
+                product.Name = request.Name;
+                product.Description = request.Description;
+                product.Price = request.Price;
+                product.Quantity = request.Quantity;
+
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { SuccessMsg = $"Item Data Updated Successfully with Name : {product.Name}" });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpDelete("items/{id}")]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            try
+            {
+
+                var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
+                if (product == null)
                 {
-                    try
-                    {
-
-                        var product = await _dbContext.Products.SingleOrDefaultAsync(p => p.Id == id);
-                        if (product == null)
-                        {
-                            return NotFound(new { Error = "ProductsData does not exist" });
-                        }
-                        _dbContext.Products.Remove(product);
-
-                        return Ok($"ProductsData Delete with Id : {product.Id}");
-                    }
-                    catch
-                    {
-                        return StatusCode(500, "Internal Server Error");
-                    }
+                    return NotFound(new { Error = "ProductsData does not exist" });
                 }
-        */
+                _dbContext.Products.Remove(product);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok($"ProductsData Delete with Id : {product.Id}");
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
         /* [HttpGet("bookings")]
          public async Task<IActionResult> GetBookings()
          {
@@ -481,7 +493,7 @@ namespace FYP.API.Controllers
                 var requests = await _dbContext.BulkClothes.Where(b => b.Id == id).ToListAsync();
                 return Ok(requests);
             }
-           
+
             catch (Exception ex)
             {
                 return StatusCode(500, new { ErrorMsg = "Internal Server Error: " + ex.Message });
@@ -504,12 +516,12 @@ namespace FYP.API.Controllers
                 if (user == null)
                     return NotFound(new { ErrorMsg = "User not found." });
 
-                
+
 
                 var bulk = await _dbContext.BulkClothes.Where(b => b.UserId == user.Id).ToListAsync();
                 if (bulk == null)
                 {
-                return BadRequest(new { SuccessMsg = "Bulk Cloth not found." });
+                    return BadRequest(new { SuccessMsg = "Bulk Cloth not found." });
 
                 }
 
@@ -624,6 +636,20 @@ namespace FYP.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { ErrorMsg = "Internal Server Error: " + ex.Message });
+            }
+        }
+
+        [HttpGet("load-capacity/{type}")]
+        public async Task<IActionResult> GetAllLoadCapacities(string type)
+        {
+            try
+            {
+                var loadCapacities = await _dbContext.LoadCapacity.Where(l => l.Type == type).ToListAsync();
+                return Ok(loadCapacities);
+            }
+            catch
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
             }
         }
 

@@ -7,7 +7,7 @@ namespace FYP.API.Models.Domain
         public int Id { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
-        public int Rounds { get; set; }
+        public int Cycles { get; set; }
 
         public Booking? Booking { get; set; }
         public int? BookingId { get; set; }

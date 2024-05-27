@@ -2,6 +2,7 @@
 using FYP.API.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 using System.Text;
@@ -71,21 +72,24 @@ namespace rjf.API
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
-            {
+         
                 app.UseSwagger();
                 app.UseSwaggerUI();
-            }
+            
 
             app.UseHttpsRedirection();
             app.UseCors(MyAllowSpecificOrigins);
-            app.UseStaticFiles();
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+            Path.Combine(Directory.GetCurrentDirectory(), "Images", "Products")),
+                RequestPath = "/Images/Products"
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
-
-
 
             app.Run();
         }
