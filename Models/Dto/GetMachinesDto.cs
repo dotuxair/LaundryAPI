@@ -7,6 +7,7 @@
         public string Status { get; set; } = string.Empty;
         public double Price { get; set; }
         public string MachineType { get; set; } = string.Empty;
+        public string loadCapacityName { get; set; } = string.Empty;
     }
 
 }

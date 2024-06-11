@@ -8,5 +8,7 @@
         public int Quantity { get; set; }
         public int Price { get; set; }
         public string ProductImageUrl { get; set; } = string.Empty;
+        public string productType { get; set; } = string.Empty;
+
     }
 }

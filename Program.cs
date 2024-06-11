@@ -79,14 +79,18 @@ namespace rjf.API
 
             app.UseHttpsRedirection();
             app.UseCors(MyAllowSpecificOrigins);
+            app.UseStaticFiles(); // Enable serving static files from wwwroot
 
-            app.UseStaticFiles(new StaticFileOptions
+            // Serve files from the custom directory (e.g., Images/Products)
+            var staticFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "Images", "Products");
+            if (Directory.Exists(staticFilesPath))
             {
-                FileProvider = new PhysicalFileProvider(
-            Path.Combine(Directory.GetCurrentDirectory(), "Images", "Products")),
-                RequestPath = "/Images/Products"
-            });
-
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(staticFilesPath),
+                    RequestPath = "/Images/Products"
+                });
+            }
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();

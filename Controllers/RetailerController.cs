@@ -65,9 +65,10 @@ namespace FYP.API.Controllers
                     Status = machine.Status,
                     MachineType =machine.Type,
                     Price = getPrice(machine.LoadCapacityId),
-                }).ToList();
+                    loadCapacityName=getName(machine.LoadCapacityId),
 
-                return Ok(machinesDtoList);
+                }).ToList();
+                return Ok(new { data = machinesDtoList });
             }
             catch
             {
@@ -78,6 +79,11 @@ namespace FYP.API.Controllers
         {
             var load = _dbContext.LoadCapacity.SingleOrDefault(l => l.Id == id);
             return load!.Price;
+        }
+        string getName(int id)
+        {
+            var load = _dbContext.LoadCapacity.SingleOrDefault(l => l.Id == id);
+            return load!.Name;
         }
 
 
@@ -124,7 +130,7 @@ namespace FYP.API.Controllers
                 var machine = new Machine
                 {
                     MachineCode = request.MachineCode,
-                    Status = "Ready",
+                    Status = request.Status,
                     Type = request.MachineType,
                     BranchId = branch.Id,
                     LoadCapacityId = request.loadCapacity,
@@ -259,10 +265,10 @@ namespace FYP.API.Controllers
                     Quantity = product.Quantity,
                     Price = product.Price,
                     ProductImageUrl = product.ImageUrl,
+                    productType = product.ProductType,
                 }).ToList();
 
-
-                return Ok(allproducts);
+                return Ok( new { data = allproducts });
             }
             catch
             {
@@ -308,7 +314,7 @@ namespace FYP.API.Controllers
                 var description = Request.Form["description"];
                 var price = Request.Form["price"];
                 var quantity = Request.Form["quantity"];
-                //var type = Request.Form["type"];
+                var type = Request.Form["type"];
 
 
                 var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
@@ -337,7 +343,7 @@ namespace FYP.API.Controllers
                     Quantity = int.Parse(quantity.ToString()),
                     Price = int.Parse(price.ToString()),
                     ImageUrl = imagePath,
-                    ProductType ="Washer",
+                    ProductType =type,
                     BranchId = retailer.BranchId,
                 };
 
@@ -373,7 +379,7 @@ namespace FYP.API.Controllers
 
 
         [HttpPut("items/{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto request)
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] GetProductsDto request)
         {
             try
             {
@@ -645,7 +651,8 @@ namespace FYP.API.Controllers
             try
             {
                 var loadCapacities = await _dbContext.LoadCapacity.Where(l => l.Type == type).ToListAsync();
-                return Ok(loadCapacities);
+                
+                return Ok(new { data = loadCapacities });
             }
             catch
             {

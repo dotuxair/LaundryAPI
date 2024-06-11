@@ -65,58 +65,58 @@ namespace FYP.API.Controllers
             }
 
         }
-        /*
-                [HttpGet("retailers")]
-                public async Task<IActionResult> GetAllRetailers()
-                {
-                    try
-                    {
-                        var retailers = new List<RetailerDto>();
-                        var users = await _dbContext.Users.ToListAsync();
-                        foreach (var user in users)
-                        {
-                            var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.UserId == user.Id);
 
-                            if (retailer != null)
-                            {
-                                var r = new RetailerDto()
-                                {
-                                    Id = user.Id,
-                                    Name = user.Name,
-                                    Email = user.Email,
-                                    PhoneNumber = user.PhoneNumber,
-                                    Password = user.Password,
-                                    BranchId = retailer!.BranchId
-                                };
-                                retailers.Add(r);
-                            }
-                        }
-
-                        return Ok(retailers);
-                    }
-                    catch
-                    {
-                        return StatusCode(500, "Internal Server Error");
-                    }
-                }*/
-        /*
-                [HttpGet("retailers/{id}")]
-                public async Task<IActionResult> GetRetailer(int id)
+        [HttpGet("retailers")]
+        public async Task<IActionResult> GetAllRetailers()
+        {
+            try
+            {
+                var retailers = new List<RetailerDto>();
+                var users = await _dbContext.Users.ToListAsync();
+                foreach (var user in users)
                 {
-                    try
+                    var retailer = await _dbContext.BranchManagers.SingleOrDefaultAsync(r => r.UserId == user.Id);
+
+                    if (retailer != null)
                     {
-                        var retailer = await _dbContext.Users.SingleOrDefaultAsync(r => r.Id == id);
-                        if (retailer == null)
+                        var r = new RetailerDto()
                         {
-                            return NotFound(new { Error = "RetailerDto Not Found" });
-                        }
-                        return Ok(retailer);
+                            Id = user.Id,
+                            Name = user.Name,
+                            Email = user.Email,
+                            PhoneNumber = user.PhoneNumber,
+                            Password = user.Password,
+                            BranchId = retailer!.BranchId
+                        };
+                        retailers.Add(r);
                     }
-                    catch
-                    {
-                        return StatusCode(500, "Internal Server Error");
-                    }
-                }*/
+                }
+                
+                return Ok(new { data = retailers });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpGet("retailers/{id}")]
+        public async Task<IActionResult> GetRetailer(int id)
+        {
+            try
+            {
+                var retailer = await _dbContext.Users.SingleOrDefaultAsync(r => r.Id == id);
+                if (retailer == null)
+                {
+                    return NotFound(new { Error = "RetailerDto Not Found" });
+                }
+                return Ok(retailer);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
 
         [HttpDelete("retailers/{id}")]
         public async Task<IActionResult> RemoveRetailer(int id)
@@ -140,43 +140,49 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
-
         [HttpPost("retailers")]
         public async Task<IActionResult> AddRetailer([FromBody] RetailerDto request)
         {
             try
             {
-
                 var branch = await _dbContext.Branches.SingleOrDefaultAsync(b => b.Id == request.BranchId);
                 if (branch == null)
                 {
                     return NotFound(new { Error = "Branch Not Found" });
                 }
-                var retailers = await _dbContext.Users.SingleOrDefaultAsync(r => r.Email == request.Email);
-                if (retailers != null)
+
+                var existingBranchManager = await _dbContext.BranchManagers
+                    .SingleOrDefaultAsync(bm => bm.BranchId == request.BranchId);
+                if (existingBranchManager != null)
                 {
-                    return Conflict(new { Error = "Email Already Exist" });
+                    return Conflict(new { Error = "Branch is already assigned to a retailer" });
                 }
-                var retailorUser = new User()
+
+                var existingRetailer = await _dbContext.Users.SingleOrDefaultAsync(r => r.Email == request.Email);
+                if (existingRetailer != null)
+                {
+                    return Conflict(new { Error = "Email Already Exists" });
+                }
+
+                var retailerUser = new User()
                 {
                     Name = request.Name,
                     Email = request.Email,
                     PhoneNumber = request.PhoneNumber,
                     Password = request.Password,
                 };
-                await _dbContext.Users.AddAsync(retailorUser);
+                await _dbContext.Users.AddAsync(retailerUser);
                 await _dbContext.SaveChangesAsync();
 
                 var retailer = new BranchManager()
                 {
-                    UserId = retailorUser.Id,
+                    UserId = retailerUser.Id,
                     BranchId = branch.Id,
                 };
                 await _dbContext.BranchManagers.AddAsync(retailer);
                 await _dbContext.SaveChangesAsync();
 
                 return Ok(new { Success = "Retailer account created successfully" });
-
             }
             catch
             {
@@ -185,31 +191,55 @@ namespace FYP.API.Controllers
         }
 
 
-        /*  [HttpPut("retailers/{id}")]
-          public async Task<IActionResult> UpdateRetailer(int id, [FromBody] RetailerDto request)
-          {
-              try
-              {
-                  var retailer = await _dbContext.Users.SingleOrDefaultAsync(r => r.Id == id);
-                  if (retailer == null)
-                  {
-                      return NotFound(new { Error = "RetailerDto Not Found" });
-                  }
 
-                  retailer.Name = request.Name;
-                  retailer.Password = request.Password;
-                  retailer.PhoneNumber = request.PhoneNumber;
+        [HttpPut("retailers/{id}")]
+        public async Task<IActionResult> UpdateRetailer(int id, [FromBody] RetailerDto request)
+        {
+            try
+            {
+                var retailer = await _dbContext.Users.Include(u => u.BranchManager)
+                    .SingleOrDefaultAsync(r => r.Id == id);
 
-                  await _dbContext.SaveChangesAsync();
+                if (retailer == null)
+                {
+                    return NotFound(new { Error = "Retailer not found" });
+                }
 
-                  return Ok(new { Success = "RetailerDto Updated Successfully" });
-              }
-              catch
-              {
-                  return StatusCode(500, "Internal Server Error");
-              }
-          }
-  */
+                var existingBranchManager = await _dbContext.BranchManagers
+                    .SingleOrDefaultAsync(bm => bm.BranchId == request.BranchId && bm.UserId != id);
+
+                if (existingBranchManager != null)
+                {
+                    return Conflict(new { Error = "Branch is already assigned to another retailer" });
+                }
+
+                // Update retailer information
+                retailer.Name = request.Name;
+                retailer.Password = request.Password;
+                retailer.PhoneNumber = request.PhoneNumber;
+
+                if (retailer.BranchManager != null)
+                {
+                    // If the retailer already has a branch manager, update its BranchId
+                    retailer.BranchManager.BranchId = request.BranchId;
+                }
+                else
+                {
+                    // Create a new branch manager entry for the retailer
+                    var newBranchManager = new BranchManager { UserId = id, BranchId = request.BranchId };
+                    _dbContext.BranchManagers.Add(newBranchManager);
+                }
+
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { Success = "Retailer updated successfully" });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
         [HttpPost("branches")]
         public async Task<IActionResult> AddBranch([FromBody] BranchDto request)
         {
@@ -258,8 +288,7 @@ namespace FYP.API.Controllers
                         IsAssigned = _dbContext.BranchManagers.Any(r => r.BranchId == branch.Id)
                     })
                     .ToListAsync();
-
-                return Ok(branches);
+                return Ok(new { data = branches });
             }
             catch
             {
@@ -545,35 +574,36 @@ namespace FYP.API.Controllers
              }
          }
  */
+
+        /*[HttpGet("programs")]
+        public async Task<IActionResult> GetAllPrograms()
+        {
+            try
+            {
+
+                var programs = await _dbContext.LaundryPrograms.ToListAsync();
+                return Ok(new { data = programs });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }*/
+
+
         [HttpGet("programs")]
         public async Task<IActionResult> GetAllPrograms()
         {
             try
             {
                 var programs = await _dbContext.LaundryPrograms.ToListAsync();
-                var allPrograms = new List<ProgramDto>();
-                foreach (var program in programs)
-                {
-                    var p = new ProgramDto()
-                    {
-                        Id = program.Id,
-                        Name = program.Name,
-                        Type = program.Type,
-                        Duration = program.Duration,
-                        SpinSpeed = program.SpinSpeed,
-                        Temprature = program.Temprature,
-                        Price = program.Price
-                    };
-                    allPrograms.Add(p);
-                }
-                return Ok(allPrograms);
+                return Ok(new { data = programs });
             }
             catch
             {
-                return StatusCode(500, "Internal Server Error");
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
             }
         }
-
         [HttpDelete("programs/{id}")]
         public async Task<IActionResult> DeleteProgram(int id)
         {
@@ -624,8 +654,6 @@ namespace FYP.API.Controllers
                     return NotFound(new { Error = "Program not found" });
                 }
 
-                program.Name = request.Name;
-                program.Duration = Convert.ToInt32(request.Duration);
                 program.Price = request.Price;
 
                 await _dbContext.SaveChangesAsync();
@@ -768,7 +796,7 @@ namespace FYP.API.Controllers
             try
             {
                 var loadCapacities = await _dbContext.LoadCapacity.ToListAsync();
-                return Ok(loadCapacities);
+                return Ok(new { data = loadCapacities });
             }
             catch
             {
@@ -805,9 +833,7 @@ namespace FYP.API.Controllers
                 {
                     return NotFound(new { ErrorMsg = "Load Capacity does not exist" });
                 }
-                loadCapacity.Name = load.Name;
                 loadCapacity.Price = load.Price;
-                loadCapacity.Description = load.Description;
                 await _dbContext.SaveChangesAsync();
                 return Ok(new { SuccessMsg = $"LoadCapacity with Id : {loadCapacity.Id} updated successfully " });
             }

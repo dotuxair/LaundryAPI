@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using rjf.API;
+using System;
 using System.Reflection.PortableExecutable;
 using System.Security.Claims;
 
@@ -188,7 +189,8 @@ namespace FYP.API.Controllers
             try
             {
                 var programs = await _dbContext.LaundryPrograms.Where(p => p.Type == type).ToListAsync();
-                return Ok(programs);
+                
+                return Ok(new { data = programs });
             }
             catch
             {
@@ -218,8 +220,8 @@ namespace FYP.API.Controllers
                         LoadCapacityDescription = m.Description,
                         Price = m.Price
                     });
-
-                return Ok(loads);
+               
+                return Ok(new { data = loads });
             }
             catch
             {
@@ -239,7 +241,7 @@ namespace FYP.API.Controllers
                     Latitude = b.Latitude,
                     Longitude = b.Longitude
                 }).ToListAsync();
-                return Ok(branches);
+                return Ok(new { data = branches });
 
             }
             catch
@@ -262,7 +264,7 @@ namespace FYP.API.Controllers
                     Price = item.Price,
                     ImageUrl = item.ImageUrl,
                 }).ToListAsync();
-                return Ok(items);
+                return Ok(new { data = items });
             }
             catch
             {
@@ -296,7 +298,8 @@ namespace FYP.API.Controllers
                     Price = b.Price,
                     Status = b.Status
                 }).ToListAsync();
-                return Ok(booking);
+
+                return Ok(new { data = booking });
             }
             catch
             {
@@ -476,7 +479,8 @@ namespace FYP.API.Controllers
                 response.MachinesList = allRequestedMachines.DistinctBy(p => p.MachineId).ToList();
                 response.DiscountedPrice = totalPriceAfterOffer;
                 response.Price = totalPrice;
-                return Ok(response);
+
+                return Ok(new { data = response });
             }
             catch
             {
@@ -518,7 +522,8 @@ namespace FYP.API.Controllers
                         };
                         response.Add(r);
                     }
-                    return Ok(response);
+
+                    return Ok(new { data = response });
                 }
                 else
                 {

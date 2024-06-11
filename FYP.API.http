@@ -1,4 +1,4 @@
-@FYP.API_HostAddress = http://localhost:5095
+@FYP.API_HostAddress = http://localhost:5097
 
 GET {{FYP.API_HostAddress}}/weatherforecast/
 Accept: application/json
