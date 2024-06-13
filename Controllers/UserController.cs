@@ -172,7 +172,8 @@ namespace FYP.API.Controllers
                 }
 
                 await _dbContext.SaveChangesAsync();
-                return Ok("Booking Done Successfully");
+                
+                return Ok((new { success = "Booking Done Successfully" }));
             }
             catch
             {
@@ -291,12 +292,18 @@ namespace FYP.API.Controllers
                 {
                     return NotFound("User not found.");
                 }
+                
                 var booking = await _dbContext.Bookings.Where(b => b.UserId == user.Id).Select(b => new BookingDto
                 {
                     Id = b.Id,
-
+                    Date = DateOnly.FromDateTime(b.BookingDate),
+                    StartTime = b.BookingDetails.FirstOrDefault().StartTime,
+                    EndTime= b.BookingDetails.FirstOrDefault().EndTime,
                     Price = b.Price,
-                    Status = b.Status
+                    Status = b.Status,
+                    branchName=b.Branch.Name,
+                    programName = string.Join(", ", b.BookingDetails.Select(d => d.LaundryProgram.Name))
+
                 }).ToListAsync();
 
                 return Ok(new { data = booking });
@@ -309,78 +316,54 @@ namespace FYP.API.Controllers
 
 
 
-
         [HttpPost("getmachines")]
         public async Task<IActionResult> GetAvailableMachineInfo([FromBody] ReceivedRequestDto request)
         {
             try
             {
-
-                var response = new AvailableMachinesDto() { };
-
-
-
+                var response = new AvailableMachinesDto();
 
                 var neededMachinesList = new List<NeededMachineDto>();
                 if (request.MachinesNeeded == 1)
                 {
-                    var m = new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne };
-                    neededMachinesList.Add(m);
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne });
                 }
                 else if (request.MachinesNeeded == 2)
                 {
-
-                    var m = new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne };
-                    var m2 = new NeededMachineDto { ProgramId = request.ProgramIdTwo, LoadCapacityId = request.CapacityIdTwo };
-                    neededMachinesList.Add(m);
-                    neededMachinesList.Add(m2);
-
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne });
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdTwo, LoadCapacityId = request.CapacityIdTwo });
                 }
                 else
                 {
-                    var m = new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne };
-                    var m2 = new NeededMachineDto { ProgramId = request.ProgramIdTwo, LoadCapacityId = request.CapacityIdTwo };
-                    var m3 = new NeededMachineDto { ProgramId = request.ProgramIdThree, LoadCapacityId = request.CapacityIdThree };
-
-                    neededMachinesList.Add(m);
-                    neededMachinesList.Add(m2);
-                    neededMachinesList.Add(m3);
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne });
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdTwo, LoadCapacityId = request.CapacityIdTwo });
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdThree, LoadCapacityId = request.CapacityIdThree });
                 }
 
                 var assignedBranches = await _dbContext.Branches
                     .Where(branch => branch.BranchManager != null && branch.BranchManager.BranchId != null)
                     .ToListAsync();
 
-
                 double itemsPrices = 0;
                 double totalPrice = 0;
                 double totalPriceAfterOffer = 0;
-
-
+                double loadCapacityPrices = 0;
                 var allItems = await _dbContext.Products.ToListAsync();
                 var allMachines = await _dbContext.Machines.ToListAsync();
                 var allLoadCapacities = await _dbContext.LoadCapacity.ToListAsync();
                 var allPrograms = await _dbContext.LaundryPrograms.ToListAsync();
                 var allOffers = await _dbContext.Offers.ToListAsync();
 
-
-
                 var currentDate = DateTime.Now;
 
-                // Validate booking date and time
                 if (currentDate >= request.BookingDate)
                     return BadRequest(new { ErrorMsg = "Please choose a future date and time." });
 
                 var allBranches = new List<BranchesData>();
                 var allRequestedMachines = new List<AvailableMachines>();
 
-
-                // getting Branches List Where All Machines are available
-
                 foreach (var b in assignedBranches)
                 {
-
-
                     if (request.Items != null)
                     {
                         foreach (var i in request.Items)
@@ -388,26 +371,22 @@ namespace FYP.API.Controllers
                             var itemExist = allItems.SingleOrDefault(o => o.Id == i.ProductId && o.BranchId == b.Id);
                             if (itemExist != null)
                             {
-                                itemsPrices = itemsPrices + (itemExist.Price * i.Quantity);
+                                itemsPrices += itemExist.Price * i.Quantity;
                             }
                         }
                     }
 
-                    totalPrice = totalPrice + itemsPrices;
-
                     var selectedMachineType = request.SelectedOption == "washer" ? "Washer" : "Dryer";
-
-                    var brachesMachines = allMachines.Where(m => m.BranchId == b.Id && m.Type == selectedMachineType).ToList();
+                    var branchMachines = allMachines.Where(m => m.BranchId == b.Id && m.Type == selectedMachineType).ToList();
 
                     int count = 0;
                     var mD = new List<AvailableMachines>();
 
                     foreach (var ma in neededMachinesList)
                     {
-
-                        foreach (var m in brachesMachines)
+                        foreach (var m in branchMachines)
                         {
-                            var machineExist = brachesMachines.FirstOrDefault(machine => machine.LoadCapacityId == ma.LoadCapacityId && machine.Id == m.Id);
+                            var machineExist = branchMachines.FirstOrDefault(machine => machine.LoadCapacityId == ma.LoadCapacityId && machine.Id == m.Id);
                             if (machineExist != null)
                             {
                                 var loadCapacityExist = allLoadCapacities.SingleOrDefault(i => i.Id == ma.LoadCapacityId);
@@ -415,7 +394,7 @@ namespace FYP.API.Controllers
                                 var timeNeededForOneMachine = request.BookingDate.AddMinutes(programExist!.Duration * request.LaundryIntervals);
                                 var bookingTime = TimeOnly.FromDateTime(request.BookingDate);
                                 var date = new DateTime(request.BookingDate.Year, request.BookingDate.Month, request.BookingDate.Day,
-                                                                 bookingTime.Hour, bookingTime.Minute, bookingTime.Second);
+                                                         bookingTime.Hour, bookingTime.Minute, bookingTime.Second);
                                 var endTime = TimeOnly.FromDateTime(timeNeededForOneMachine);
                                 var todayDate = DateTime.Now;
                                 DateTime endingDate = new DateTime(date.Year, date.Month, date.Day,
@@ -426,21 +405,24 @@ namespace FYP.API.Controllers
                                 {
                                     break;
                                 }
-                                totalPrice = totalPrice + (programExist.Price);
-                                var offer = allOffers.FirstOrDefault(o => o.LaundryProgramId == programExist.Id);
-                                if (offer != null)
-                                {
-                                    if (offer.StartDate <= todayDate && todayDate <= offer.EndDate)
-                                    {
-                                        var discount = (programExist.Price * offer!.OffPercentage) / 100;
-                                        totalPriceAfterOffer = totalPrice - discount;
-                                    }
-                                }
-
-
 
                                 if (isMachineAvailable)
                                 {
+                                    // Accumulate the price for the program
+                                    totalPrice += programExist.Price;
+                                    var offer = allOffers.FirstOrDefault(o => o.LaundryProgramId == programExist.Id);
+                                    if (offer != null && offer.StartDate <= todayDate && todayDate <= offer.EndDate)
+                                    {
+                                        var discount = 0.0;
+                                        discount = (programExist.Price * offer.OffPercentage) / 100;
+                                        totalPriceAfterOffer += (programExist.Price - discount);
+                                    }
+                                    else
+                                    {
+                                        totalPriceAfterOffer += programExist.Price;
+                                    }
+                                    loadCapacityPrices += loadCapacityExist?.Price ?? 0;
+
                                     var mData = new AvailableMachines
                                     {
                                         MachineId = machineExist.Id,
@@ -453,14 +435,17 @@ namespace FYP.API.Controllers
                                     count += 1;
                                 }
                             }
-
                         }
-
                     }
+
                     if (count == neededMachinesList.Count)
                     {
                         allRequestedMachines.AddRange(mD);
                         var branchDistance = await _methods.GetDrivingDistanceAsync(request.Latitude, request.Longitude, b.Latitude, b.Longitude);
+
+                        // Convert branchDistance to kilometers (assuming it's initially in meters)
+                        branchDistance /= 1000.0;
+
                         if (branchDistance <= request.Distance)
                         {
                             allBranches.Add(new BranchesData
@@ -473,7 +458,12 @@ namespace FYP.API.Controllers
                     }
                 }
 
-                allBranches.OrderBy(r => r.Distance);
+                allBranches = allBranches.OrderBy(r => r.Distance).ToList();
+
+                // Sum total prices
+                // Sum total prices
+                totalPrice += itemsPrices + loadCapacityPrices;
+                totalPriceAfterOffer += itemsPrices + loadCapacityPrices;
 
                 response.BranchesList = allBranches.DistinctBy(b => b.BranchId).ToList();
                 response.MachinesList = allRequestedMachines.DistinctBy(p => p.MachineId).ToList();
@@ -487,6 +477,7 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
 
         private async Task<bool> IsMachineAvailableAsync(int machineId, TimeOnly bookingStartTime, TimeOnly bookingEndTime)
         {
