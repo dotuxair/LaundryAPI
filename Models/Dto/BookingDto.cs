@@ -8,6 +8,7 @@
         public DateOnly Date { get; set; }
         public double Price { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string type { get; set; } = string.Empty;
         public string branchName { get; set; } = string.Empty;
         public string? programName { get; set; }
 

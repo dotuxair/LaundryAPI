@@ -82,26 +82,42 @@ namespace FYP.API.Controllers
         {
             try
             {
-                var currentDate = DateTime.UtcNow;
-
-                var offer = await _dbContext.Offers
+                /*var offer = await _dbContext.Offers
                     .Where(o => o.StartDate <= currentDate && o.EndDate >= currentDate && o.Status == "Active")
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync();*/
+                var currentDate = DateTime.Now;
+                var offer = await _dbContext.Offers
+                    .Where(o => o.StartDate <= currentDate && o.EndDate >= currentDate && o.Status == "Active").
+                    ToListAsync();
                 if (offer == null)
                 {
                     return NoContent();
                 }
-                return Ok(offer);
-
+                var offerDtos = offer.Select(offer => new OfferDto
+                {
+                    Id = offer.Id,
+                    Name = offer.Name,
+                    StartDate = offer.StartDate,
+                    EndDate = offer.EndDate,
+                    OffPercentage = offer.OffPercentage,
+                    Status = offer.Status,
+                    ProgramId = offer.LaundryProgramId ?? 0,
+                    ProgramName = GetProgramName(offer.LaundryProgramId ?? 0)
+                }).ToList();
+                
+                return Ok(new { data = offerDtos });
             }
             catch
             {
                 return StatusCode(500, "Internal Server Error");
             }
-
         }
 
-
+        private string GetProgramName(int id)
+        {
+            var p = _dbContext.LaundryPrograms.SingleOrDefault(p => p.Id == id);
+            return p!.Name;
+        }
         [HttpPost("bookings")]
         public async Task<IActionResult> AddBooking([FromBody] BookingData request)
         {
@@ -182,7 +198,28 @@ namespace FYP.API.Controllers
             }
         }
 
+        
+        [HttpPut("bookings/{id}")]
+        public async Task<IActionResult> UpdateOffer(int id, [FromBody] BookingDto request)
+        {
+            try
+            {
+                var booking = await _dbContext.Bookings.SingleOrDefaultAsync(o => o.Id == id);
+                if (booking == null)
+                {
+                    return NotFound(new { Error = "booking Not Found" });
+                }
+                booking.Status = request.Status;
 
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { Success = "Booking Update Successfully with Id : " + booking.Id });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
 
         [HttpGet("programs/{type}")]
         public async Task<IActionResult> GetPrograms(string type)
@@ -301,7 +338,8 @@ namespace FYP.API.Controllers
                     EndTime= b.BookingDetails.FirstOrDefault().EndTime,
                     Price = b.Price,
                     Status = b.Status,
-                    branchName=b.Branch.Name,
+                    type = b.BookingDetails.FirstOrDefault().Machine.Type,
+                    branchName =b.Branch.Name,
                     programName = string.Join(", ", b.BookingDetails.Select(d => d.LaundryProgram.Name))
 
                 }).ToListAsync();
@@ -356,8 +394,8 @@ namespace FYP.API.Controllers
 
                 var currentDate = DateTime.Now;
 
-                if (currentDate >= request.BookingDate)
-                    return BadRequest(new { ErrorMsg = "Please choose a future date and time." });
+                /*if (currentDate < request.BookingDate)
+                    return BadRequest(new { ErrorMsg = "Please choose a future date and time." });*/
 
                 var allBranches = new List<BranchesData>();
                 var allRequestedMachines = new List<AvailableMachines>();

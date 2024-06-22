@@ -426,42 +426,66 @@ namespace FYP.API.Controllers
             }
         }
 
-        /* [HttpGet("bookings")]
-         public async Task<IActionResult> GetBookings()
-         {
-             try
-             {
-                 var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+        [HttpGet("bookings")]
+        public async Task<IActionResult> GetBookings()
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
 
-                 if (string.IsNullOrEmpty(email))
-                 {
-                     return BadRequest("User email not found.");
-                 }
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("User email not found.");
+                }
 
-                 var user = await _dbContext.Users
-                     .Include(u => u.Branch)
-                     .SingleOrDefaultAsync(x => x.Email == email && x.Role == "RetailerDto");
+                var user = await _dbContext.Users
+                    .Include(u => u.BranchManager.Branch)
+                    .SingleOrDefaultAsync(x => x.Email == email && x.BranchManager.UserId == x.Id);
 
-                 if (user == null)
-                 {
-                     return NotFound("RetailerDto not found.");
-                 }
-                 var booking = await _dbContext.Bookings.Where(b => b.BranchId == user.BranchId).Select(b => new BookingDto
-                 {
-                     StartTime = b.StartTime,
-                     EndTime = b.EndTime,
-                     Date = b.Date,
-                     Price = b.Price,
-                     Status = b.Status
-                 }).ToListAsync();
+                if (user == null)
+                {
+                    return NotFound("RetailerDto not found.");
+                }
+                var booking = await _dbContext.Bookings.Where(b => b.BranchId == user.BranchManager.BranchId).Select(b => new BookingDto
+                {
+                    StartTime=b.BookingDetails.FirstOrDefault().StartTime,
+                    EndTime= b.BookingDetails.FirstOrDefault().EndTime,
+                    Date = DateOnly.FromDateTime(b.BookingDate),
+                    Price = b.Price,
+                    Status = b.Status,
+                    type=b.BookingDetails.FirstOrDefault().Machine.Type,
+                    programName= string.Join(", ", b.BookingDetails.Select(d => d.LaundryProgram.Name))
+                }).ToListAsync();
+                
+                return Ok(new { data = booking });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
 
-                 return Ok(booking);
-             }
-             catch
-             {
-                 return StatusCode(500, "Internal Server Error");
-             }
-         }*/
+        [HttpPut("bookings/{id}")]
+        public async Task<IActionResult> UpdateOffer(int id, [FromBody] BookingDto request)
+        {
+            try
+            {
+                var booking = await _dbContext.Bookings.SingleOrDefaultAsync(o => o.Id == id);
+                if (booking == null)
+                {
+                    return NotFound(new { Error = "booking Not Found" });
+                }
+                booking.Status = request.Status;
+
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { Success = "Booking Update Successfully with Id : " + booking.Id });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
 
         [HttpGet("getBulkRequests")]
         public async Task<IActionResult> GetBulkRequests()

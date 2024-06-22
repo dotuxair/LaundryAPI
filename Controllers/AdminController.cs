@@ -459,8 +459,7 @@ namespace FYP.API.Controllers
                     ProgramId = offer.LaundryProgramId ?? 0,
                     ProgramName = GetProgramName(offer.LaundryProgramId ?? 0)
                 }).ToList();
-
-                return Ok(offerDtos);
+                return Ok(new { data = offerDtos });
             }
             catch
             {
@@ -498,7 +497,7 @@ namespace FYP.API.Controllers
                     EndDate = request.EndDate,
                     StartDate = request.StartDate,
                     OffPercentage = request.OffPercentage,
-                    Status = "Scheduled",
+                    Status = "Active",
 
                     LaundryProgramId = request.ProgramId
 
