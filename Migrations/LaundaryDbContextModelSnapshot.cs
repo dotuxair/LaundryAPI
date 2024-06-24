@@ -106,6 +106,10 @@ namespace FYP.API.Migrations
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BookingId");
@@ -203,6 +207,12 @@ namespace FYP.API.Migrations
 
                     b.Property<bool>("InformUser")
                         .HasColumnType("bit");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
 
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
@@ -450,6 +460,41 @@ namespace FYP.API.Migrations
                     b.ToTable("PurchasedProducts");
                 });
 
+            modelBuilder.Entity("FYP.API.Models.Domain.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BookingId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Stars")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserThoughts")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Reviews");
+                });
+
             modelBuilder.Entity("FYP.API.Models.Domain.User", b =>
                 {
                     b.Property<int>("Id")
@@ -654,6 +699,27 @@ namespace FYP.API.Migrations
                     b.Navigation("Booking");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("FYP.API.Models.Domain.Review", b =>
+                {
+                    b.HasOne("FYP.API.Models.Domain.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId");
+
+                    b.HasOne("FYP.API.Models.Domain.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId");
+
+                    b.HasOne("FYP.API.Models.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FYP.API.Models.Domain.Admin", b =>

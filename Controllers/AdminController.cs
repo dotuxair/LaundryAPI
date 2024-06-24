@@ -444,6 +444,7 @@ namespace FYP.API.Controllers
             var p = _dbContext.LaundryPrograms.SingleOrDefault(p => p.Id == id);
             return p!.Name;
         }
+
         [HttpPost("offers")]
         public async Task<IActionResult> AddOffer([FromBody] OfferDto request)
         {
@@ -469,8 +470,8 @@ namespace FYP.API.Controllers
                     EndDate = request.EndDate,
                     StartDate = request.StartDate,
                     OffPercentage = request.OffPercentage,
-                    Status = "Scheduled",
-
+                    Status = DateTime.Now.Date == request.StartDate.Date ? "Active" : "Scheduled",
+                    AdminId = admin.Id,
                     LaundryProgramId = request.ProgramId
 
                 };
@@ -800,6 +801,7 @@ namespace FYP.API.Controllers
         {
             try
             {
+
                 var loadCapacity = await _dbContext.LoadCapacity.SingleOrDefaultAsync(p => p.Id == id);
                 if (loadCapacity == null)
                 {
@@ -823,13 +825,18 @@ namespace FYP.API.Controllers
         {
             try
             {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value.ToString();
+                var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == email);
+
+                var admin = await _dbContext.Admins.SingleOrDefaultAsync(a => a.UserId == user!.Id);
                 var loadCapacity = new LoadCapacity
                 {
                     Name = load.Name,
                     Price = load.Price,
                     Capacity = load.Capacity,
                     Description = load.Description,
-                    Type = load.Type
+                    Type = load.Type,
+                    AdminId = admin!.Id
                 };
                 await _dbContext.LoadCapacity.AddAsync(loadCapacity);
                 await _dbContext.SaveChangesAsync();
@@ -841,6 +848,37 @@ namespace FYP.API.Controllers
                 return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
             }
         }
+
+
+        [HttpGet("booked-machines")]
+        public async Task<IActionResult> GetBookedMachines()
+        {
+            try
+            {
+                var bookedMachines = await _dbContext.BookingDetails
+
+                    .Select(bd => new BookedMachineDto
+                    {
+                        BookingDetailId = bd.Id,
+                        BookingDate = bd.Booking!.BookingDate,
+                        StartTime = bd.StartTime,
+                        EndTime = bd.EndTime,
+                        Status = bd.Status,
+                        MachineCode = bd.Machine!.MachineCode,
+                        Price = bd.Booking.Price,
+                        MachineType = bd.Machine.Type,
+                    }).OrderByDescending(bd => bd.BookingDate)
+                    .ToListAsync();
+
+                return Ok(bookedMachines);
+            }
+
+            catch
+            {
+                return StatusCode(500, "Internal Server Error: ");
+            }
+        }
+
 
     }
 }

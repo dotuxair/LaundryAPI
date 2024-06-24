@@ -15,6 +15,7 @@ namespace FYP.API.Models.Domain
 
         public User? User { get; set; }
         public int? UserId { get; set; }
+
         public ICollection<BookingDetail>? BookingDetails { get; set; }
     }
 }

@@ -16,6 +16,8 @@ namespace FYP.API.Models.Domain
         public Branch? Branch { get; set; }
         public int LoadCapacityId { get; set; }
         public LoadCapacity? LoadCapacity { get; set; }
+
+
     }
 }
 

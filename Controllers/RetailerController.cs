@@ -63,7 +63,7 @@ namespace FYP.API.Controllers
                     Id = machine.Id,
                     MachineCode = machine.MachineCode,
                     Status = machine.Status,
-                    MachineType =machine.Type,
+                    MachineType = machine.Type,
                     Price = getPrice(machine.LoadCapacityId),
                 }).ToList();
 
@@ -86,7 +86,7 @@ namespace FYP.API.Controllers
         {
             try
             {
-                
+
                 var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
 
                 if (string.IsNullOrEmpty(email))
@@ -308,7 +308,7 @@ namespace FYP.API.Controllers
                 var description = Request.Form["description"];
                 var price = Request.Form["price"];
                 var quantity = Request.Form["quantity"];
-                //var type = Request.Form["type"];
+                var type = Request.Form["type"];
 
 
                 var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
@@ -337,7 +337,7 @@ namespace FYP.API.Controllers
                     Quantity = int.Parse(quantity.ToString()),
                     Price = int.Parse(price.ToString()),
                     ImageUrl = imagePath,
-                    ProductType ="Washer",
+                    ProductType = type,
                     BranchId = retailer.BranchId,
                 };
 
@@ -419,43 +419,6 @@ namespace FYP.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
-
-        /* [HttpGet("bookings")]
-         public async Task<IActionResult> GetBookings()
-         {
-             try
-             {
-                 var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
-
-                 if (string.IsNullOrEmpty(email))
-                 {
-                     return BadRequest("User email not found.");
-                 }
-
-                 var user = await _dbContext.Users
-                     .Include(u => u.Branch)
-                     .SingleOrDefaultAsync(x => x.Email == email && x.Role == "RetailerDto");
-
-                 if (user == null)
-                 {
-                     return NotFound("RetailerDto not found.");
-                 }
-                 var booking = await _dbContext.Bookings.Where(b => b.BranchId == user.BranchId).Select(b => new BookingDto
-                 {
-                     StartTime = b.StartTime,
-                     EndTime = b.EndTime,
-                     Date = b.Date,
-                     Price = b.Price,
-                     Status = b.Status
-                 }).ToListAsync();
-
-                 return Ok(booking);
-             }
-             catch
-             {
-                 return StatusCode(500, "Internal Server Error");
-             }
-         }*/
 
         [HttpGet("getBulkRequests")]
         public async Task<IActionResult> GetBulkRequests()
@@ -650,6 +613,68 @@ namespace FYP.API.Controllers
             catch
             {
                 return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
+            }
+        }
+
+        [HttpGet("booked-machines")]
+        public async Task<IActionResult> GetBookedMachines()
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("User email not found.");
+                }
+
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email);
+
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                var bookedMachines = await _dbContext.BookingDetails
+                    .Where(bd => bd.Booking!.UserId == user.Id)
+                    .Select(bd => new BookedMachineDto
+                    {
+                        BookingDetailId = bd.Id,
+                        BookingDate = bd.Booking!.BookingDate,
+                        StartTime = bd.StartTime,
+                        EndTime = bd.EndTime,
+                        Status = bd.Status,
+                        MachineCode = bd.Machine!.MachineCode,
+                        Price = bd.Booking.Price,
+                        MachineType = bd.Machine.Type,
+                        ProgramName = bd.LaundryProgram!.Name,  // Assuming BookingDetail has a navigation property to Program
+                        BranchName = bd.Booking.Branch!.Name  // Assuming Booking has a navigation property to Branch
+                    })
+                    .OrderBy(bd => bd.BookingDate)
+                    .ToListAsync();
+
+                var filteredBookedMachines = bookedMachines
+                    .Where(b => b.Status == "In-Progress" || b.Status == "Scheduled")
+                    .ToList();
+
+                return Ok(filteredBookedMachines);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        private int branchContainMachine(string machineCode)
+        {
+            var machine = _dbContext.Machines.FirstOrDefault(m => m.MachineCode == machineCode);
+            if (machine != null)
+            {
+                return machine.BranchId;
+            }
+            else
+            {
+                return 0;
             }
         }
 

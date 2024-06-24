@@ -4,8 +4,6 @@ using FYP.API.Models.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using rjf.API;
-using System.Reflection.PortableExecutable;
 using System.Security.Claims;
 
 namespace FYP.API.Controllers
@@ -24,7 +22,7 @@ namespace FYP.API.Controllers
         }
 
         [HttpPost("update-profile")]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)
+        public async Task<IActionResult> UpdateProfile(string phoneNumber, string name)
         {
             try
             {
@@ -35,8 +33,8 @@ namespace FYP.API.Controllers
                 {
                     return NotFound(new { Error = "User not found" });
                 }
-                user.PhoneNumber = request.PhoneNumber;
-                user.Name = request.Name;
+                user.PhoneNumber = phoneNumber;
+                user.Name = name;
                 await _dbContext.SaveChangesAsync();
 
                 return Ok($"Profile Updated Successfully");
@@ -47,58 +45,220 @@ namespace FYP.API.Controllers
             }
         }
 
-        /* [HttpGet("update-offer")]
-         public async Task<IActionResult> UpdateOfferStatus()
-         {
-             try
-             {
-                 var currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
-
-                 var expiredOffers = await _dbContext.Offers
-                     .Where(o => o.EndDate < currentDate && o.Status == "Active")
-                     .ToListAsync();
-
-                 foreach (var offer in expiredOffers)
-                 {
-                     offer.Status = "Expired";
-                 }
-
-                 await _dbContext.SaveChangesAsync();
-
-
-                 return Ok("Offer status updated successfully");
-             }
-             catch
-             {
-
-                 return StatusCode(500, "Internal Server Error");
-             }
-         }
- */
-
-        [HttpGet("get-offer")]
-        public async Task<IActionResult> GetOffer()
+        [HttpPost("update-password")]
+        public async Task<IActionResult> Password(string password)
         {
             try
             {
-                var currentDate = DateTime.UtcNow;
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value.ToString();
 
-                var offer = await _dbContext.Offers
-                    .Where(o => o.StartDate <= currentDate && o.EndDate >= currentDate && o.Status == "Active")
-                    .FirstOrDefaultAsync();
-                if (offer == null)
+                var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == email);
+                if (user == null)
                 {
-                    return NoContent();
+                    return NotFound(new { Error = "User not found" });
                 }
-                return Ok(offer);
+                user.Password = password;
+                await _dbContext.SaveChangesAsync();
 
+                return Ok($"Password Updated Successfully");
             }
             catch
             {
                 return StatusCode(500, "Internal Server Error");
             }
-
         }
+
+
+        [HttpGet("update-profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value.ToString();
+
+                var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { Error = "User not found" });
+                }
+
+
+                return Ok(user);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpGet("update-offers-status")]
+        public async Task<IActionResult> UpdateOffersStatus()
+        {
+            try
+            {
+                var currentDate = DateTime.Now.Date;
+
+                var offersToUpdate = await _dbContext.Offers.ToListAsync();
+
+                foreach (var offer in offersToUpdate)
+                {
+                    if (currentDate > offer.EndDate.Date)
+                    {
+                        offer.Status = "Expired";
+                    }
+                    else if (currentDate >= offer.StartDate.Date && currentDate <= offer.EndDate.Date)
+                    {
+                        offer.Status = "Active";
+                    }
+                }
+
+                if (offersToUpdate.Any())
+                {
+                    await _dbContext.SaveChangesAsync();
+                }
+
+                return Ok("Offers status updated successfully");
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+
+        [HttpGet("offers")]
+        public async Task<IActionResult> GetActiveOffers(string showBy = "all")
+        {
+            try
+            {
+                if (showBy == "all")
+                {
+
+                    var activeOffers = await _dbContext.Offers
+                        .Join(_dbContext.LaundryPrograms,
+                              offer => offer.LaundryProgramId,
+                              program => program.Id,
+                              (offer, program) => new
+                              {
+                                  Offer = offer,
+                                  ProgramName = program.Name
+                              })
+                        .AsNoTracking()
+                        .ToListAsync();
+
+                    return Ok(activeOffers);
+                }
+                else
+                {
+                    var currentDate = DateTime.Now;
+
+                    var activeOffers = await _dbContext.Offers
+                        .Where(o => o.StartDate <= currentDate && o.EndDate >= currentDate && o.Status != "Expired")
+                        .Join(_dbContext.LaundryPrograms,
+                              offer => offer.LaundryProgramId,
+                              program => program.Id,
+                              (offer, program) => new
+                              {
+                                  Offer = offer,
+                                  ProgramName = program.Name
+                              })
+                        .AsNoTracking()
+                        .ToListAsync();
+
+                    return Ok(activeOffers);
+                }
+               
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error:");
+
+            }
+        }
+
+
+
+        [HttpGet("get-programs")]
+        public async Task<IActionResult> GetPrograms()
+        {
+            try
+            {
+                return Ok(await _dbContext.LaundryPrograms.ToListAsync());
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error:");
+            }
+        }
+
+        [HttpGet("get-load")]
+        public async Task<IActionResult> GetLoadCapacities()
+        {
+            try
+            {
+                return Ok(await _dbContext.LoadCapacity.ToListAsync());
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error:");
+            }
+        }
+        [HttpPut("completed/{id}")]
+        public async Task<IActionResult> CompleteBooking(int id)
+        {
+            return await UpdateBookingStatus(id, "Completed", "Ready");
+        }
+
+        [HttpPut("in-progress/{id}")]
+        public async Task<IActionResult> InProgressBooking(int id)
+        {
+            return await UpdateBookingStatus(id, "In-Progress", "Booked");
+        }
+
+        [HttpPut("canceled/{id}")]
+        public async Task<IActionResult> CanceledBooking(int id)
+        {
+            return await UpdateBookingStatus(id, "Cancelled", "Ready");
+        }
+
+        private async Task<IActionResult> UpdateBookingStatus(int id, string bookingDetailStatus, string machineStatus)
+        {
+            var bookingDetail = await _dbContext.BookingDetails.FirstOrDefaultAsync(bd => bd.Id == id);
+            if (bookingDetail == null)
+            {
+                return NotFound("Booking detail not found");
+            }
+
+            bookingDetail.Status = bookingDetailStatus;
+
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.Id == bookingDetail.BookingId);
+            if (booking == null)
+            {
+                return NotFound("Booking not found");
+            }
+
+            var relatedBookingDetails = await _dbContext.BookingDetails
+                .Where(bd => bd.BookingId == booking.Id)
+                .ToListAsync();
+
+            if (relatedBookingDetails.All(bd => bd.Status == bookingDetailStatus))
+            {
+                booking.Status = bookingDetailStatus;
+            }
+
+            if (machineStatus != null)
+            {
+                var machine = await _dbContext.Machines.FirstOrDefaultAsync(m => m.Id == bookingDetail.MachineId);
+                if (machine != null)
+                {
+                    machine.Status = machineStatus;
+                }
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return Ok();
+        }
+
 
 
         [HttpPost("bookings")]
@@ -123,7 +283,7 @@ namespace FYP.API.Controllers
 
                 var booking = new Booking
                 {
-                    BookingDate = request.Machines[0].BookingDate.Date,
+                    BookingDate = request.Machines![0].BookingDate.Date,
                     Price = request.PriceAfterDiscount,
                     BranchId = request.BranchId,
                     UserId = user.Id,
@@ -155,7 +315,7 @@ namespace FYP.API.Controllers
                     }
                 }
 
-                foreach (var m in request.Machines!.Where(mbox=>mbox.BranchId==request.BranchId))
+                foreach (var m in request.Machines!.Where(mbox => mbox.BranchId == request.BranchId))
                 {
                     var bookingDetail = new BookingDetail
                     {
@@ -164,7 +324,8 @@ namespace FYP.API.Controllers
                         Cycles = request.LaundryIntervals,
                         BookingId = bookingId,
                         MachineId = m.MachineId,
-                        LaundryProgramId = m.ProgramId
+                        LaundryProgramId = m.ProgramId,
+                        Status = "Scheduled"
                     };
                     await _dbContext.BookingDetails.AddAsync(bookingDetail);
 
@@ -180,6 +341,55 @@ namespace FYP.API.Controllers
             }
         }
 
+        [HttpGet("booked-machines")]
+        public async Task<IActionResult> GetBookedMachines()
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("User email not found.");
+                }
+
+                var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Email == email);
+
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                var bookedMachines = await _dbContext.BookingDetails
+                    .Where(bd => bd.Booking!.UserId == user.Id)
+                    .Select(bd => new BookedMachineDto
+                    {
+                        BookingDetailId = bd.Id,
+                        BookingDate = bd.Booking!.BookingDate,
+                        StartTime = bd.StartTime,
+                        EndTime = bd.EndTime,
+                        Status = bd.Status,
+                        MachineCode = bd.Machine!.MachineCode,
+                        Price = bd.Booking.Price,
+                        MachineType = bd.Machine.Type,
+                        ProgramName = bd.LaundryProgram!.Name,  // Assuming BookingDetail has a navigation property to Program
+                        BranchName = bd.Booking.Branch!.Name  // Assuming Booking has a navigation property to Branch
+                    })
+                    .OrderBy(bd => bd.BookingDate)
+                    .ToListAsync();
+
+                var filteredBookedMachines = bookedMachines
+                    .Where(b => b.Status == "In-Progress" || b.Status == "Scheduled")
+                    .ToList();
+
+                return Ok(filteredBookedMachines);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
 
 
         [HttpGet("programs/{type}")]
@@ -189,6 +399,22 @@ namespace FYP.API.Controllers
             {
                 var programs = await _dbContext.LaundryPrograms.Where(p => p.Type == type).ToListAsync();
                 return Ok(programs);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+
+            }
+        }
+
+
+        [HttpGet("get-offers")]
+        public async Task<IActionResult> GetActiveOffers()
+        {
+            try
+            {
+                var offers = await _dbContext.Offers.Where(p => p.Status == "Active").ToListAsync();
+                return Ok(offers);
             }
             catch
             {
@@ -248,12 +474,12 @@ namespace FYP.API.Controllers
             }
         }
 
-        [HttpGet("items/{type}")]
-        public async Task<IActionResult> GetLaundryItems(string type)
+        [HttpGet("items")]
+        public async Task<IActionResult> GetLaundryItems(string type, int branchId)
         {
             try
             {
-                var items = await _dbContext.Products.Where(i => i.ProductType == type && i.Quantity > 0).Select(item => new
+                var items = await _dbContext.Products.Where(i => i.ProductType == type.ToUpper() && i.Quantity > 0 && i.BranchId == branchId).Select(item => new
                 {
                     Id = item.Id,
                     Name = item.Name,
@@ -270,9 +496,8 @@ namespace FYP.API.Controllers
             }
         }
 
-
-        [HttpGet("bookings")]
-        public async Task<IActionResult> GetBookings()
+        [HttpPost("getmachines")]
+        public async Task<IActionResult> GetAvailableMachineInfo([FromBody] ReceivedRequestDto request)
         {
             try
             {
@@ -289,198 +514,144 @@ namespace FYP.API.Controllers
                 {
                     return NotFound("User not found.");
                 }
-                var booking = await _dbContext.Bookings.Where(b => b.UserId == user.Id).Select(b => new BookingDto
-                {
-                    Id = b.Id,
-
-                    Price = b.Price,
-                    Status = b.Status
-                }).ToListAsync();
-                return Ok(booking);
-            }
-            catch
-            {
-                return StatusCode(500, "Internal Server Error");
-            }
-        }
+                var getAlreadyBookedBranch = _dbContext.Bookings.Where(bd => bd.Status == "Scheduled" || bd.Status == "In-Progress").FirstOrDefault();
 
 
+                bool isPriceSet = false;
 
-
-        [HttpPost("getmachines")]
-        public async Task<IActionResult> GetAvailableMachineInfo([FromBody] ReceivedRequestDto request)
-        {
-            try
-            {
-
-                var response = new AvailableMachinesDto() { };
-
-
-
-
+                var response = new AvailableMachinesDto();
                 var neededMachinesList = new List<NeededMachineDto>();
+
+                // Populate neededMachinesList based on request.MachinesNeeded
                 if (request.MachinesNeeded == 1)
                 {
-                    var m = new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne };
-                    neededMachinesList.Add(m);
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne });
                 }
                 else if (request.MachinesNeeded == 2)
                 {
-
-                    var m = new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne };
-                    var m2 = new NeededMachineDto { ProgramId = request.ProgramIdTwo, LoadCapacityId = request.CapacityIdTwo };
-                    neededMachinesList.Add(m);
-                    neededMachinesList.Add(m2);
-
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne });
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdTwo, LoadCapacityId = request.CapacityIdTwo });
                 }
                 else
                 {
-                    var m = new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne };
-                    var m2 = new NeededMachineDto { ProgramId = request.ProgramIdTwo, LoadCapacityId = request.CapacityIdTwo };
-                    var m3 = new NeededMachineDto { ProgramId = request.ProgramIdThree, LoadCapacityId = request.CapacityIdThree };
-
-                    neededMachinesList.Add(m);
-                    neededMachinesList.Add(m2);
-                    neededMachinesList.Add(m3);
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdOne, LoadCapacityId = request.CapacityIdOne });
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdTwo, LoadCapacityId = request.CapacityIdTwo });
+                    neededMachinesList.Add(new NeededMachineDto { ProgramId = request.ProgramIdThree, LoadCapacityId = request.CapacityIdThree });
                 }
 
                 var assignedBranches = await _dbContext.Branches
-                    .Where(branch => branch.BranchManager != null && branch.BranchManager.BranchId != null)
+                    .Where(branch => branch.BranchManager != null)
                     .ToListAsync();
 
-
-                double itemsPrices = 0;
-                double totalPrice = 0;
-                double totalPriceAfterOffer = 0;
-
-
-                var allItems = await _dbContext.Products.ToListAsync();
                 var allMachines = await _dbContext.Machines.ToListAsync();
                 var allLoadCapacities = await _dbContext.LoadCapacity.ToListAsync();
                 var allPrograms = await _dbContext.LaundryPrograms.ToListAsync();
-                var allOffers = await _dbContext.Offers.ToListAsync();
-
 
 
                 var currentDate = DateTime.Now;
 
-                // Validate booking date and time
                 if (currentDate >= request.BookingDate)
                     return BadRequest(new { ErrorMsg = "Please choose a future date and time." });
 
                 var allBranches = new List<BranchesData>();
                 var allRequestedMachines = new List<AvailableMachines>();
 
-
-                // getting Branches List Where All Machines are available
-
-                foreach (var b in assignedBranches)
+                foreach (var branch in assignedBranches)
                 {
+                   
 
-
-                    if (request.Items != null)
-                    {
-                        foreach (var i in request.Items)
-                        {
-                            var itemExist = allItems.SingleOrDefault(o => o.Id == i.ProductId && o.BranchId == b.Id);
-                            if (itemExist != null)
-                            {
-                                itemsPrices = itemsPrices + (itemExist.Price * i.Quantity);
-                            }
-                        }
-                    }
-
-                    totalPrice = totalPrice + itemsPrices;
+                    // Initialize branch specific price
+                    double branchTotalPrice = 0;
+                    double dPrice = 0;
 
                     var selectedMachineType = request.SelectedOption == "washer" ? "Washer" : "Dryer";
-
-                    var brachesMachines = allMachines.Where(m => m.BranchId == b.Id && m.Type == selectedMachineType).ToList();
+                    var branchMachines = allMachines.Where(m => m.BranchId == branch.Id && m.Type == selectedMachineType && m.Status == "Ready").ToList();
 
                     int count = 0;
-                    var mD = new List<AvailableMachines>();
+                    var machinesData = new List<AvailableMachines>();
 
-                    foreach (var ma in neededMachinesList)
+                    foreach (var neededMachine in neededMachinesList)
                     {
-
-                        foreach (var m in brachesMachines)
+                        foreach (var machine in branchMachines)
                         {
-                            var machineExist = brachesMachines.FirstOrDefault(machine => machine.LoadCapacityId == ma.LoadCapacityId && machine.Id == m.Id);
+                            var machineExist = branchMachines.FirstOrDefault(m => m.LoadCapacityId == neededMachine.LoadCapacityId && m.Id == machine.Id);
                             if (machineExist != null)
                             {
-                                var loadCapacityExist = allLoadCapacities.SingleOrDefault(i => i.Id == ma.LoadCapacityId);
-                                var programExist = allPrograms.SingleOrDefault(p => p.Id == ma.ProgramId);
-                                var timeNeededForOneMachine = request.BookingDate.AddMinutes(programExist!.Duration * request.LaundryIntervals);
-                                var bookingTime = TimeOnly.FromDateTime(request.BookingDate);
-                                var date = new DateTime(request.BookingDate.Year, request.BookingDate.Month, request.BookingDate.Day,
-                                                                 bookingTime.Hour, bookingTime.Minute, bookingTime.Second);
-                                var endTime = TimeOnly.FromDateTime(timeNeededForOneMachine);
-                                var todayDate = DateTime.Now;
-                                DateTime endingDate = new DateTime(date.Year, date.Month, date.Day,
-                                                                 endTime.Hour, endTime.Minute, endTime.Second);
+                                var loadCapacity = allLoadCapacities.SingleOrDefault(lc => lc.Id == neededMachine.LoadCapacityId);
+                                var program = allPrograms.SingleOrDefault(p => p.Id == neededMachine.ProgramId);
 
-                                var isMachineAvailable = await IsMachineAvailableAsync(machineExist!.Id, bookingTime, endTime);
-                                if (count == neededMachinesList.Count)
+                                if (loadCapacity != null && program != null)
                                 {
-                                    break;
-                                }
-                                totalPrice = totalPrice + (programExist.Price);
-                                var offer = allOffers.FirstOrDefault(o => o.LaundryProgramId == programExist.Id);
-                                if (offer != null)
-                                {
-                                    if (offer.StartDate <= todayDate && todayDate <= offer.EndDate)
+
+                                    var timeNeededForOneMachine = request.BookingDate.AddMinutes(program.Duration * request.LaundryIntervals);
+                                    var bookingTime = TimeOnly.FromDateTime(request.BookingDate);
+                                    var date = new DateTime(request.BookingDate.Year, request.BookingDate.Month, request.BookingDate.Day,
+                                                            bookingTime.Hour, bookingTime.Minute, bookingTime.Second);
+                                    var endTime = TimeOnly.FromDateTime(timeNeededForOneMachine);
+                                    DateTime endingDate = new DateTime(date.Year, date.Month, date.Day,
+                                                                       endTime.Hour, endTime.Minute, endTime.Second);
+
+                                    var isMachineAvailable = await IsMachineAvailableAsync(machineExist.Id, bookingTime, endTime);
+
+                                    if (isMachineAvailable)
                                     {
-                                        var discount = (programExist.Price * offer!.OffPercentage) / 100;
-                                        totalPriceAfterOffer = totalPrice - discount;
+                                        var machineData = new AvailableMachines
+                                        {
+                                            MachineId = machineExist.Id,
+                                            ProgramId = program.Id,
+                                            BookingDate = date,
+                                            EndDate = endingDate,
+                                            BranchId = branch.Id
+                                        };
+
+                                        machinesData.Add(machineData);
+                                        count++;
+                                        branchTotalPrice += loadCapacity.Price * request.LaundryIntervals + program.Price * request.LaundryIntervals;
+
+                                        if (count == neededMachinesList.Count)
+                                        {
+                                            break;
+                                        }
                                     }
                                 }
-
-
-
-                                if (isMachineAvailable)
-                                {
-                                    var mData = new AvailableMachines
-                                    {
-                                        MachineId = machineExist.Id,
-                                        ProgramId = programExist.Id,
-                                        BookingDate = date,
-                                        EndDate = endingDate,
-                                        BranchId = b.Id
-                                    };
-                                    mD.Add(mData);
-                                    count += 1;
-                                }
                             }
-
                         }
 
-                    }
-                    if (count == neededMachinesList.Count)
-                    {
-                        allRequestedMachines.AddRange(mD);
-                        var branchDistance = await _methods.GetDrivingDistanceAsync(request.Latitude, request.Longitude, b.Latitude, b.Longitude);
-                        if (branchDistance <= request.Distance)
+                        if (count == neededMachinesList.Count)
                         {
-                            allBranches.Add(new BranchesData
+                            allRequestedMachines.AddRange(machinesData);
+                            var branchDistance = _methods.GetDistance(request.Latitude, request.Longitude, branch.Latitude, branch.Longitude);
+                            if (branchDistance <= request.Distance)
                             {
-                                BranchName = b.Name,
-                                BranchId = b.Id,
-                                Distance = branchDistance,
-                            });
+                                allBranches.Add(new BranchesData
+                                {
+                                    BranchName = branch.Name,
+                                    BranchId = branch.Id,
+                                    Distance = branchDistance,
+                                    isRecomended = getAlreadyBookedBranch != null && branch.Id == getAlreadyBookedBranch.BranchId,
+                                    Stars = GetAverageRatingByBranchIdAsync(branch.Id),
+                                });
+
+                                // Set total price only once
+                                if (!isPriceSet)
+                                {
+                                    response.Price = branchTotalPrice;
+                                    response.DiscountedPrice = response.Price - dPrice;
+                                    isPriceSet = true;
+                                }
+                            }
                         }
                     }
                 }
 
-                allBranches.OrderBy(r => r.Distance);
-
-                response.BranchesList = allBranches.DistinctBy(b => b.BranchId).ToList();
+                response.BranchesList = allBranches.OrderBy(r => r.Distance).DistinctBy(b => b.BranchId).ToList();
                 response.MachinesList = allRequestedMachines.DistinctBy(p => p.MachineId).ToList();
-                response.DiscountedPrice = totalPriceAfterOffer;
-                response.Price = totalPrice;
+
                 return Ok(response);
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(500, "Internal Server Error");
+                return StatusCode(500, "Internal Server Error: " + ex.Message);
             }
         }
 
@@ -494,8 +665,6 @@ namespace FYP.API.Controllers
             return existingBookings.Count == 0;
         }
 
-
-
         [HttpGet("getAllBranches")]
         public async Task<IActionResult> GetAllBranches(double latitude, double longitude)
         {
@@ -507,7 +676,7 @@ namespace FYP.API.Controllers
                 {
                     foreach (var b in branches)
                     {
-                        var distance = _methods.GetDistance(latitude, longitude, b.Latitude, b.Longitude);
+                        var distance = await _methods.GetDrivingDistanceAsync(latitude, longitude, b.Latitude, b.Longitude);
                         var r = new BulkRequestBranches
                         {
                             BranchId = b.Id,
@@ -518,14 +687,12 @@ namespace FYP.API.Controllers
                         };
                         response.Add(r);
                     }
-                    return Ok(response);
+                    return Ok(response.OrderBy(o => o.Distance));
                 }
                 else
                 {
                     return BadRequest(new { ErrorMsg = "Can't find branches right now." });
                 }
-
-
             }
             catch
             {
@@ -562,9 +729,11 @@ namespace FYP.API.Controllers
                             DateRequested = DateTime.Now.Date,
                             Status = "Submitted",
                             UserId = user.Id,
-
+                            Latitude = requestDto.Latitude,
+                            Longitude = requestDto.Longitude,
                         };
                         await _dbContext.BulkClothes.AddAsync(request);
+                        await _dbContext.SaveChangesAsync();
                         return Ok(new { SuccessMsg = "Request Submitted Successfully. Wait for Branch Manager Response." });
                     }
                     else
@@ -579,6 +748,7 @@ namespace FYP.API.Controllers
             }
         }
 
+
         [HttpPost("bulkCloth/{id}")]
         public async Task<IActionResult> getBulkCloth(int id)
         {
@@ -586,13 +756,13 @@ namespace FYP.API.Controllers
             {
                 if (id == 0)
                 {
-                    return BadRequest(new { ErrorMsg = "Id Cannt be null and empty.." });
+                    return BadRequest(new { ErrorMsg = "Id Can't be null and empty." });
 
                 };
                 var bulk = await _dbContext.BulkClothes.SingleOrDefaultAsync(b => b.Id == id);
                 if (bulk == null)
                 {
-                    return NotFound(new { ErrorMsg = "Bulk Cloth request does not exist" });
+                    return NotFound(new { ErrorMsg = "Bulk Cloth request does not exist." });
                 }
                 else
                 {
@@ -611,6 +781,252 @@ namespace FYP.API.Controllers
 
             }
         }
+
+
+        [HttpGet("bulkCloth")]
+        public async Task<IActionResult> GetBulkRequest()
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value.ToString();
+
+                var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { ErrorMsg = "User not found" });
+                }
+                else
+                {
+                    var bulkRequests = _dbContext.BulkClothes.Where(b => b.UserId == user.Id).ToList();
+
+                    return Ok(bulkRequests);
+                }
+
+            }
+            catch
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error" });
+            }
+        }
+        [HttpGet("get-bookings")]
+        public async Task<IActionResult> GetBookings()
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { Error = "Email claim not found" });
+                }
+
+                var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { Error = "User not found" });
+                }
+
+                var bookings = await _dbContext.Bookings
+                    .Where(b => b.UserId == user.Id)
+                    .Select(b => new
+                    {
+                        b.Id,
+                        b.BookingDate,
+                        b.Price,
+                        b.Status,
+                        b.BranchId,
+                        BranchName = b.Branch!.Name,
+                        MachineId = b.BookingDetails!.Select(d => d.MachineId).FirstOrDefault(),
+
+                    })
+                    .OrderBy(b => b.BookingDate)
+                    .ToListAsync();
+
+                var machineIds = bookings
+                    .Where(b => b.MachineId.HasValue)
+                    .Select(b => b.MachineId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                var machines = await _dbContext.Machines
+                                               .Where(m => machineIds.Contains(m.Id))
+                                               .ToDictionaryAsync(m => m.Id, m => m.Type);
+
+                var userBookingDtos = bookings.Where(b=>b.Status != "In-Progress").Select(b => new
+                {
+                    id = b.Id,
+                    bookingDate = b.BookingDate,
+                    price = b.Price,
+                    status = b.Status,
+                    branchId = b.BranchId,
+                    branchName = b.BranchName,
+                    machineType = b.MachineId.HasValue && machines.ContainsKey(b.MachineId.Value)
+                                  ? machines[b.MachineId.Value]
+                                  : "Machine Removed",
+                    ratingDone = isRatingDone(b.Id),
+                }).ToList();
+
+                return Ok(userBookingDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = "Internal Server Error", Details = ex.Message });
+            }
+        }
+
+        bool isRatingDone(int bookingId)
+        {
+            return _dbContext.Reviews.FirstOrDefault(r => r.BookingId == bookingId) != null ? true : false;
+        }
+
+        [HttpDelete("remove-booking")]
+        public async Task<IActionResult> RemoveBooking(int bookingId)
+        {
+            try
+            {
+                var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
+                if (booking != null)
+                {
+                    var purchProducts = _dbContext.PurchasedProducts.Where(b => b.BookingId == booking.Id);
+                    var bookdetails = _dbContext.BookingDetails.Where(b => b.BookingId == booking.Id);
+                    _dbContext.RemoveRange(purchProducts);
+                    _dbContext.RemoveRange(bookdetails);
+                    _dbContext.Remove(booking);
+                    await _dbContext.SaveChangesAsync();
+                    return NoContent();
+                }
+                else
+                {
+                    return BadRequest(new { ErrorMsg = "Booking not found" });
+                }
+            }
+            catch
+            {
+                return StatusCode(500, new { ErrorMsg = $"Internal Server Error" });
+            }
+        }
+
+         int GetAverageRatingByBranchIdAsync(int branchId)
+        {
+            var reviewCount =  _dbContext.Reviews
+                .Where(r => r.BranchId == branchId)
+                .Count();
+
+            if (reviewCount == 0)
+            {
+                return 0;
+            }
+
+            var totalStars =  _dbContext.Reviews
+                .Where(r => r.BranchId == branchId)
+                .Sum(r => r.Stars);
+
+            double averageStars = (double)totalStars / reviewCount;
+            int flooredAverageStars = (int)Math.Floor(averageStars);
+            return flooredAverageStars;
+        }
+
+
+        [HttpGet("booking-status-count")]
+        public async Task<IActionResult> GetBookingStatusCount()
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { Error = "Email claim not found" });
+                }
+
+                var user = await _dbContext.Users.SingleOrDefaultAsync(a => a.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { Error = "User not found" });
+                }
+
+                var bookingStatusCounts = await _dbContext.Bookings
+                    .Where(b => b.UserId == user.Id)
+                    .GroupBy(b => b.Status)
+                    .Select(g => new
+                    {
+                        Status = g.Key,
+                        Count = g.Count()
+                    })
+                    .ToListAsync();
+
+                var completedCount = bookingStatusCounts.FirstOrDefault(x => x.Status == "Completed")?.Count ?? 0;
+                var scheduledCount = bookingStatusCounts.FirstOrDefault(x => x.Status == "Scheduled")?.Count ?? 0;
+                var inProgressCount = bookingStatusCounts.FirstOrDefault(x => x.Status == "In-Progress")?.Count ?? 0;
+                var cancelledCount = bookingStatusCounts.FirstOrDefault(x => x.Status == "Cancelled")?.Count ?? 0;
+
+                return Ok(new
+                {
+                    Completed = completedCount,
+                    Scheduled = scheduledCount,
+                    InProgress = inProgressCount,
+                    Cancelled = cancelledCount
+                });
+            }
+            catch
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpPost("add-review")]
+        public async Task<IActionResult> AddReview(ReviewDto request)
+        {
+            try
+            {
+                var email = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { Error = "Email claim not found" });
+                }
+
+                var userWithBooking = await _dbContext.Users
+                    .Where(u => u.Email == email)
+                    .Select(u => new
+                    {
+                        User = u,
+                        Booking = _dbContext.Bookings.FirstOrDefault(b => b.Id == request.BookingId)
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (userWithBooking == null || userWithBooking.User == null)
+                {
+                    return NotFound(new { Error = "User not found" });
+                }
+
+                if (userWithBooking.Booking == null)
+                {
+                    return NotFound(new { Error = "Booking does not exist" });
+                }
+
+                var review = new Review
+                {
+                    UserId = userWithBooking.User.Id,
+                    BookingId = request.BookingId,
+                    UserThoughts = request.UserThoughts,
+                    Stars = request.Stars,
+                    BranchId = userWithBooking.Booking.BranchId
+                };
+
+                await _dbContext.Reviews.AddAsync(review);
+                await _dbContext.SaveChangesAsync();
+
+                return StatusCode(201, new { SuccessMsg = "Review done successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMsg = "Internal Server Error", DetailedErrorMsg = ex.ToString() });
+            }
+        }
+
+
     }
+
 
 }

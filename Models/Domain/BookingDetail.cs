@@ -8,6 +8,7 @@ namespace FYP.API.Models.Domain
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public int Cycles { get; set; }
+        public string Status { get; set; } = string.Empty;
 
         public Booking? Booking { get; set; }
         public int? BookingId { get; set; }

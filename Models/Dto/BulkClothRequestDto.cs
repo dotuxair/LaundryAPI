@@ -7,5 +7,8 @@
         public decimal Price { get; set; }
         public int BranchId { get; set; }
         public DateTime PickUpDate { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+
     }
 }

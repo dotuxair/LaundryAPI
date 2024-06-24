@@ -65,7 +65,7 @@ namespace FYP.API.Data
 
         public async Task<double> GetDrivingDistanceAsync(double startLatitude, double startLongitude, double endLatitude, double endLongitude)
         {
-            var url = $"https://maps.googleapis.com/maps/api/distancematrix/json?origins={startLatitude},{startLongitude}&destinations={endLatitude},{endLongitude}&key=AIzaSyAK4M5dY-0P9pDc12nBdHnsmyCkFJMENSQ";
+            var url = $"https://maps.googleapis.com/maps/api/distancematrix/json?origins={startLatitude},{startLongitude}&destinations={endLatitude},{endLongitude}&key=your_google_map_key";
 
             using (var httpClient = new HttpClient())
             {
@@ -76,7 +76,7 @@ namespace FYP.API.Data
                     var content = await response.Content.ReadAsStringAsync();
                     var jsonObject = JObject.Parse(content);
 
-                    var distanceText = (string)jsonObject["rows"]?[0]?["elements"]?[0]?["distance"]?["text"];
+                    var distanceText = (string)jsonObject["rows"]?[0]?["elements"]?[0]?["distance"]?["text"]!;
                     if (distanceText != null && distanceText.EndsWith("km"))
                     {
                         // Extract distance in kilometers
@@ -94,6 +94,31 @@ namespace FYP.API.Data
                 }
             }
 
+        }
+        public async Task<string> GetNearestLocationName(double latitude, double longitude)
+        {
+            try
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    string url = $"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={latitude},{longitude}&key=AIzaSyAK4M5dY-0P9pDc12nBdHnsmyCkFJMENSQ";
+
+                    HttpResponseMessage response = await httpClient.GetAsync(url);
+
+                    response.EnsureSuccessStatusCode(); // Throws exception for unsuccessful status codes
+
+                    dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
+
+                    string nearestLocationName = data.results[0].name;
+
+                    return nearestLocationName;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                return null;
+            }
         }
     }
 }

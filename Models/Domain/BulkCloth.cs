@@ -14,7 +14,8 @@
         public DateTime? PickUpDate { get; set; }
         public bool InformUser { get; set; }
         public bool InformManager { get; set; }
-
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
 
         public decimal? AcceptedPrice { get; set; }
         public string PaymentStatus { get; set; } = string.Empty;

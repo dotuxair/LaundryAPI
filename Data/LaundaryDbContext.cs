@@ -22,6 +22,7 @@ namespace FYP.API.Data
         public DbSet<LoadCapacity> LoadCapacity { get; set; }
         public DbSet<BulkCloth> BulkClothes { get; set; }
         public DbSet<LaundryProgram> LaundryPrograms { get; set; }
+        public DbSet<Review> Reviews { get; set; }
 
 
 

@@ -15,6 +15,8 @@
         public string BranchName { get; set; } = string.Empty;
         public double Distance { get; set; }
         public int BranchId { get; set; }
+        public bool isRecomended { get; set; }
+        public int Stars { get; set; }
     }
 
     public class AvailableMachines
